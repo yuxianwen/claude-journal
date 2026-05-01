@@ -170,6 +170,7 @@ export function getSession(projectId: string, sessionId: string): ConversationDa
       content = rawContent.map((c: Record<string, unknown>) => {
         if (c.type === 'text') return { type: 'text' as const, text: String(c.text || '') };
         if (c.type === 'thinking') return { type: 'thinking' as const, thinking: String(c.thinking || '') };
+        if (c.type === 'redacted_thinking') return { type: 'thinking' as const, thinking: '' };
         if (c.type === 'tool_use') return {
           type: 'tool_use' as const,
           id: String(c.id || ''),

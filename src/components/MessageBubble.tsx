@@ -119,7 +119,7 @@ function ThinkingBlock({ text }: { text: string }) {
       </button>
       {open && (
         <div className="mt-1 pl-4 border-l-2 border-gray-700 text-xs text-gray-500 italic whitespace-pre-wrap">
-          {text}
+          {text || '（思考内容已被压缩）'}
         </div>
       )}
     </div>

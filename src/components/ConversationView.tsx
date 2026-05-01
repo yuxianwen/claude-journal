@@ -5,6 +5,67 @@ import { ConversationData } from '@/types';
 import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
 
+function titleKey(projectId: string, sessionId: string) {
+  return `journal:title:${projectId}/${sessionId}`;
+}
+
+function EditableTitle({ projectId, sessionId, defaultTitle }: { projectId: string; sessionId: string; defaultTitle: string }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(() => {
+    if (typeof window === 'undefined') return defaultTitle;
+    return localStorage.getItem(titleKey(projectId, sessionId)) || defaultTitle;
+  });
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(titleKey(projectId, sessionId));
+    setTitle(saved || defaultTitle);
+  }, [projectId, sessionId, defaultTitle]);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  const save = (val: string) => {
+    const trimmed = val.trim() || defaultTitle;
+    setTitle(trimmed);
+    if (trimmed === defaultTitle) {
+      localStorage.removeItem(titleKey(projectId, sessionId));
+    } else {
+      localStorage.setItem(titleKey(projectId, sessionId), trimmed);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        defaultValue={title}
+        onBlur={e => save(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') save(e.currentTarget.value);
+          if (e.key === 'Escape') setEditing(false);
+        }}
+        className="text-sm font-medium text-gray-200 bg-gray-800 border border-gray-600 rounded px-2 py-0.5 outline-none focus:border-blue-500 w-full max-w-md"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="group/title flex items-center gap-1.5 text-left"
+      title="点击编辑标题"
+    >
+      <h2 className="text-sm font-medium text-gray-200 leading-tight">{title}</h2>
+      <svg className="w-3 h-3 text-gray-600 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    </button>
+  );
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -88,9 +149,9 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-medium text-gray-200 leading-tight">{data.session.title}</h2>
-          <p className="text-xs text-gray-600 mt-0.5">{data.session.cwd}</p>
+        <div className="min-w-0 flex-1">
+          <EditableTitle projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} />
+          <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
         </div>
         <CopyButton text={exportToMarkdown(data)} />
       </div>
