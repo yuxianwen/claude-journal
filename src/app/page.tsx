@@ -1,65 +1,106 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { Project } from '@/types';
+import Sidebar from '@/components/Sidebar';
+import ConversationView from '@/components/ConversationView';
+import SearchView from '@/components/SearchView';
 
 export default function Home() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then(r => r.json())
+      .then(data => {
+        setProjects(data);
+        setLoading(false);
+        if (data.length > 0 && data[0].sessions.length > 0) {
+          setSelectedProjectId(data[0].id);
+          setSelectedSessionId(data[0].sessions[0].id);
+        }
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleSelectSession = useCallback((projectId: string, sessionId: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedSessionId(sessionId);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      if (e.key === 'Escape') setShowSearch(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
+      {loading ? (
+        <div className="w-72 bg-gray-900 border-r border-gray-800 flex items-center justify-center">
+          <div className="text-gray-600 text-xs animate-pulse">加载中...</div>
+        </div>
+      ) : (
+        <Sidebar
+          projects={projects}
+          selectedProjectId={selectedProjectId}
+          selectedSessionId={selectedSessionId}
+          onSelectSession={handleSelectSession}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      <main className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900/50">
+          <div className="text-xs text-gray-600">
+            {projects.length > 0 && (
+              <span>{projects.length} 个项目 · {projects.reduce((a, p) => a + p.sessions.length, 0)} 个会话</span>
+            )}
+          </div>
+          <button
+            onClick={() => setShowSearch(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>搜索</span>
+            <kbd className="bg-gray-800 px-1 rounded text-gray-600">⌘K</kbd>
+          </button>
         </div>
+
+        {selectedProjectId && selectedSessionId ? (
+          <ConversationView
+            key={`${selectedProjectId}/${selectedSessionId}`}
+            projectId={selectedProjectId}
+            sessionId={selectedSessionId}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-4xl mb-4">💬</div>
+              <p className="text-gray-500 text-sm">从左侧选择一个会话</p>
+              <p className="text-gray-700 text-xs mt-1">或按 ⌘K 搜索</p>
+            </div>
+          </div>
+        )}
       </main>
+
+      {showSearch && (
+        <SearchView
+          onSelectSession={handleSelectSession}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
     </div>
   );
 }
