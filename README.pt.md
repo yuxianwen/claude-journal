@@ -2,7 +2,7 @@
 
 Aplicativo web local para navegar e revisar o histórico de conversas do Claude Code. Lê os arquivos JSONL diretamente de `~/.claude/projects/` — sem configuração necessária.
 
-**Idioma:** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | Português | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+**Idioma:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | Português | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
 ![Interface principal](public/screenshot-main.png)
 

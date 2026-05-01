@@ -2,7 +2,7 @@
 
 Claude Code 대화 기록을 로컬에서 탐색하고 검토하는 웹 앱입니다. `~/.claude/projects/`의 JSONL 세션 파일을 직접 읽으며, 별도 설정이 필요 없습니다.
 
-**언어:** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+**언어:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
 ![메인 화면](public/screenshot-main.png)
 

@@ -2,7 +2,7 @@
 
 Claude Code की बातचीत के इतिहास को स्थानीय रूप से ब्राउज़ और समीक्षा करने के लिए एक लोकल वेब ऐप। `~/.claude/projects/` से सीधे JSONL सत्र फ़ाइलें पढ़ता है — कोई कॉन्फ़िगरेशन आवश्यक नहीं।
 
-**भाषा:** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | हिन्दी
+**भाषा:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | हिन्दी
 
 ![मुख्य इंटरफ़ेस](public/screenshot-main.png)
 

@@ -2,7 +2,7 @@
 
 Application web locale pour parcourir et revoir l'historique de vos conversations Claude Code. Lit directement les fichiers JSONL depuis `~/.claude/projects/` — aucune configuration requise.
 
-**Langue :** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | Français | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+**Langue :** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | Français | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
 ![Interface principale](public/screenshot-main.png)
 

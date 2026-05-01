@@ -2,7 +2,7 @@
 
 Claude Code の会話履歴をローカルで閲覧・確認するための Web アプリです。`~/.claude/projects/` にある JSONL セッションファイルを直接読み込むため、設定不要で使えます。
 
-**言語:** [简体中文](README.md) | [English](README.en.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+**言語:** [简体中文](README.zh-CN.md) | [English](README.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
 ![メイン画面](public/screenshot-main.png)
 

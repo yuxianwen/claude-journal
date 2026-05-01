@@ -2,7 +2,7 @@
 
 تطبيق ويب محلي لتصفح ومراجعة سجل محادثات Claude Code. يقرأ ملفات JSONL مباشرةً من `~/.claude/projects/` — دون الحاجة إلى أي إعداد.
 
-**اللغة:** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | العربية | [हिन्दी](README.hi.md)
+**اللغة:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | العربية | [हिन्दी](README.hi.md)
 
 ![الواجهة الرئيسية](public/screenshot-main.png)
 

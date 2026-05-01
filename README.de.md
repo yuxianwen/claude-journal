@@ -2,7 +2,7 @@
 
 Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude Code Konversationshistorie. Liest JSONL-Sitzungsdateien direkt aus `~/.claude/projects/` — keine Konfiguration erforderlich.
 
-**Sprache:** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | Deutsch | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+**Sprache:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | Deutsch | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
 ![Hauptoberfläche](public/screenshot-main.png)
 
