@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Claude Journal
 
-## Getting Started
+本地 Web 应用，用于浏览和回顾你的 Claude Code 对话历史。直接读取 `~/.claude/projects/` 中的 JSONL 会话文件，无需任何配置。
 
-First, run the development server:
+![主界面](public/screenshot-main.png)
+
+## 功能
+
+- **项目 & 会话浏览** — 按工作目录分组，侧边栏展示所有项目和历史会话
+- **对话渲染** — Markdown 全渲染，代码块语法高亮（Shiki），支持 GFM 表格 / 任务列表
+- **工具调用展示** — 可视化 Claude 执行的每次工具调用（Bash、文件读写等）及其输出
+- **Thinking 块** — 折叠展示 Claude 的推理过程
+- **Token 统计** — 每次会话的输入 / 输出 / 缓存命中 token 数，以及估算费用
+- **全文搜索** — `⌘K` 跨所有会话实时搜索
+- **导出 Markdown** — 一键将对话复制为 Markdown 格式
+
+![搜索界面](public/screenshot-search.png)
+
+## 快速开始
+
+**前置条件：** 已安装并使用过 [Claude Code](https://claude.ai/code)，本地存在 `~/.claude/projects/` 目录。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 克隆项目
+git clone https://github.com/yuxianwen/claude-journal.git
+cd claude-journal
+
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000) 即可看到你的所有 Claude Code 会话。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Next.js | 16 | 框架 & API Routes |
+| React | 19 | UI |
+| Tailwind CSS | v4 | 样式 |
+| Shiki | v4 | 代码语法高亮 |
+| react-markdown | v10 | Markdown 渲染 |
+| remark-gfm | v4 | GFM 扩展语法 |
 
-## Learn More
+## 数据来源
 
-To learn more about Next.js, take a look at the following resources:
+应用只读取本地文件，不联网，不上传任何数据。会话数据路径：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+~/.claude/projects/
+  └── <project-id>/
+        ├── <session-id>.jsonl
+        └── ...
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+每个 `.jsonl` 文件对应一次 Claude Code 会话，包含完整的消息记录和 token 用量。
 
-## Deploy on Vercel
+## 键盘快捷键
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 快捷键 | 功能 |
+|--------|------|
+| `⌘K` | 打开全文搜索 |
+| `Esc` | 关闭搜索 |
