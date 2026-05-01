@@ -1,0 +1,68 @@
+# Claude Journal
+
+Claude Code の会話履歴をローカルで閲覧・確認するための Web アプリです。`~/.claude/projects/` にある JSONL セッションファイルを直接読み込むため、設定不要で使えます。
+
+**言語:** [简体中文](README.md) | [English](README.en.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+
+![メイン画面](public/screenshot-main.png)
+
+## 機能
+
+- **プロジェクト & セッションブラウザ** — 作業ディレクトリ別にグループ化されたプロジェクトと、サイドバーに表示される全セッション履歴
+- **会話レンダリング** — 完全な Markdown レンダリング、シンタックスハイライト付きコードブロック（Shiki）、GFM テーブル & タスクリスト対応
+- **ツール呼び出しの可視化** — Claude が行ったすべてのツール呼び出し（Bash、ファイルの読み書きなど）とその出力を表示
+- **思考ブロック** — Claude の推論プロセスを折りたたみ表示
+- **トークン統計** — セッションごとの入力 / 出力 / キャッシュヒットのトークン数と推定コスト
+- **全文検索** — `⌘K` で全セッションをリアルタイム検索
+- **Markdown エクスポート** — ワンクリックで会話を Markdown としてコピー
+
+![検索画面](public/screenshot-search.png)
+
+## クイックスタート
+
+**前提条件:** [Claude Code](https://claude.ai/code) がインストール済みで、少なくとも一度使用されていること（`~/.claude/projects/` が存在する状態）。
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/yuxianwen/claude-journal.git
+cd claude-journal
+
+# 依存関係をインストール
+pnpm install
+
+# 開発サーバーを起動
+pnpm dev
+```
+
+[http://localhost:3000](http://localhost:3000) を開くと、すべての Claude Code セッションを閲覧できます。
+
+## 技術スタック
+
+| 技術 | バージョン | 用途 |
+|------|-----------|------|
+| Next.js | 16 | フレームワーク & API Routes |
+| React | 19 | UI |
+| Tailwind CSS | v4 | スタイリング |
+| Shiki | v4 | コードシンタックスハイライト |
+| react-markdown | v10 | Markdown レンダリング |
+| remark-gfm | v4 | GFM 拡張構文 |
+
+## データソース
+
+このアプリはローカルファイルのみを読み込みます — ネットワーク通信なし、データのアップロードなし。セッションデータのパス：
+
+```
+~/.claude/projects/
+  └── <project-id>/
+        ├── <session-id>.jsonl
+        └── ...
+```
+
+各 `.jsonl` ファイルは 1 つの Claude Code セッションに対応しており、完全なメッセージ履歴とトークン使用量が含まれています。
+
+## キーボードショートカット
+
+| ショートカット | 操作 |
+|--------------|------|
+| `⌘K` | 全文検索を開く |
+| `Esc` | 検索を閉じる |

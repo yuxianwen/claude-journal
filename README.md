@@ -2,6 +2,8 @@
 
 本地 Web 应用，用于浏览和回顾你的 Claude Code 对话历史。直接读取 `~/.claude/projects/` 中的 JSONL 会话文件，无需任何配置。
 
+**语言：** 简体中文 | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+
 ![主界面](public/screenshot-main.png)
 
 ## 功能

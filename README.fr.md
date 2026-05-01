@@ -1,0 +1,68 @@
+# Claude Journal
+
+Application web locale pour parcourir et revoir l'historique de vos conversations Claude Code. Lit directement les fichiers JSONL depuis `~/.claude/projects/` — aucune configuration requise.
+
+**Langue :** [简体中文](README.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | Français | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
+
+![Interface principale](public/screenshot-main.png)
+
+## Fonctionnalités
+
+- **Explorateur de projets et sessions** — Tous les projets regroupés par répertoire de travail, avec l'historique complet dans la barre latérale
+- **Rendu des conversations** — Markdown complet, blocs de code avec coloration syntaxique (Shiki), tableaux GFM et listes de tâches
+- **Visualisation des appels d'outils** — Affiche chaque appel d'outil effectué par Claude (Bash, lecture/écriture de fichiers, etc.) et son résultat
+- **Blocs de réflexion** — Affichage repliable du processus de raisonnement de Claude
+- **Statistiques de tokens** — Nombre de tokens en entrée / sortie / cache et coût estimé par session
+- **Recherche plein texte** — `⌘K` pour rechercher dans toutes les sessions instantanément
+- **Exporter en Markdown** — Copiez n'importe quelle conversation en Markdown en un clic
+
+![Interface de recherche](public/screenshot-search.png)
+
+## Démarrage rapide
+
+**Prérequis :** [Claude Code](https://claude.ai/code) doit être installé et avoir été utilisé au moins une fois pour que `~/.claude/projects/` existe localement.
+
+```bash
+# Cloner le dépôt
+git clone https://github.com/yuxianwen/claude-journal.git
+cd claude-journal
+
+# Installer les dépendances
+pnpm install
+
+# Démarrer le serveur de développement
+pnpm dev
+```
+
+Ouvrez [http://localhost:3000](http://localhost:3000) pour parcourir toutes vos sessions Claude Code.
+
+## Stack technique
+
+| Technologie | Version | Rôle |
+|-------------|---------|------|
+| Next.js | 16 | Framework & API Routes |
+| React | 19 | Interface utilisateur |
+| Tailwind CSS | v4 | Styles |
+| Shiki | v4 | Coloration syntaxique |
+| react-markdown | v10 | Rendu Markdown |
+| remark-gfm | v4 | Syntaxe GFM étendue |
+
+## Source des données
+
+L'application ne lit que des fichiers locaux — aucune requête réseau, aucune donnée envoyée. Chemin des données de session :
+
+```
+~/.claude/projects/
+  └── <project-id>/
+        ├── <session-id>.jsonl
+        └── ...
+```
+
+Chaque fichier `.jsonl` correspond à une session Claude Code et contient l'historique complet des messages ainsi que l'utilisation des tokens.
+
+## Raccourcis clavier
+
+| Raccourci | Action |
+|-----------|--------|
+| `⌘K` | Ouvrir la recherche plein texte |
+| `Esc` | Fermer la recherche |
