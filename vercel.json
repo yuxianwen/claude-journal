@@ -1,4 +1,3 @@
 {
-  "buildCommand": "rm -rf src/app/api && next build",
-  "outputDirectory": "out"
+  "buildCommand": "rm -rf src/app/api && next build"
 }
