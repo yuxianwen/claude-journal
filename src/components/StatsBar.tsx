@@ -1,6 +1,7 @@
 'use client';
 
 import { SessionMeta, TokenUsage } from '@/types';
+import { useI18n } from '@/i18n';
 
 // Pricing per million tokens (Sonnet 4.5 as default)
 const PRICING = {
@@ -41,6 +42,7 @@ interface StatsBarProps {
 }
 
 export default function StatsBar({ session, totalMessages }: StatsBarProps) {
+  const { t } = useI18n();
   const cost = calcCost(session.tokenUsage);
   const duration = formatDuration(session.startTime, session.endTime);
 
@@ -48,12 +50,12 @@ export default function StatsBar({ session, totalMessages }: StatsBarProps) {
     <div className="border-b border-gray-800 bg-gray-900/50 px-6 py-2 flex items-center gap-6 text-xs text-gray-500 overflow-x-auto">
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <span className="text-gray-400">💬</span>
-        <span>{totalMessages} 条消息</span>
+        <span>{t('statsMessages', { n: totalMessages })}</span>
       </div>
       {session.toolCallCount > 0 && (
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <span>🔧</span>
-          <span>{session.toolCallCount} 次工具调用</span>
+          <span>{t('statsToolCalls', { n: session.toolCallCount })}</span>
         </div>
       )}
       {duration && (
@@ -64,16 +66,16 @@ export default function StatsBar({ session, totalMessages }: StatsBarProps) {
       )}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <span>⬆</span>
-        <span>{fmt(session.tokenUsage.inputTokens)} tokens 输入</span>
+        <span>{fmt(session.tokenUsage.inputTokens)} {t('statsInput')}</span>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <span>⬇</span>
-        <span>{fmt(session.tokenUsage.outputTokens)} tokens 输出</span>
+        <span>{fmt(session.tokenUsage.outputTokens)} {t('statsOutput')}</span>
       </div>
       {session.tokenUsage.cacheReadTokens > 0 && (
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <span>⚡</span>
-          <span>{fmt(session.tokenUsage.cacheReadTokens)} cache 命中</span>
+          <span>{fmt(session.tokenUsage.cacheReadTokens)} {t('statsCacheHit')}</span>
         </div>
       )}
       {cost > 0 && (

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FolderProvider } from "@/contexts/FolderContext";
+import { I18nProvider } from "@/i18n";
 import SwRegister from "@/components/SwRegister";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -45,7 +46,9 @@ export default function RootLayout({
         <SwRegister />
         <Analytics />
         <SpeedInsights />
-        <FolderProvider>{children}</FolderProvider>
+        <I18nProvider>
+          <FolderProvider>{children}</FolderProvider>
+        </I18nProvider>
       </body>
     </html>
   );

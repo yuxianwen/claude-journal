@@ -5,9 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message, ContentBlock, TokenUsage } from '@/types';
 import ToolCallBlock from './ToolCallBlock';
+import { useI18n } from '@/i18n';
 
-function messageToMarkdown(message: Message): string {
-  const role = message.type === 'user' ? '用户' : 'Claude';
+function messageToMarkdown(message: Message, userLabel: string): string {
+  const role = message.type === 'user' ? userLabel : 'Claude';
   const lines: string[] = [`**${role}**`, ''];
   for (const block of message.content) {
     if (block.type === 'text') {
@@ -21,12 +22,12 @@ function messageToMarkdown(message: Message): string {
   return lines.join('\n');
 }
 
-function CopyMdButton({ message, isUser }: { message: Message; isUser: boolean }) {
+function CopyMdButton({ message, isUser, userLabel, label, copiedLabel }: { message: Message; isUser: boolean; userLabel: string; label: string; copiedLabel: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(messageToMarkdown(message));
+    await navigator.clipboard.writeText(messageToMarkdown(message, userLabel));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -35,17 +36,17 @@ function CopyMdButton({ message, isUser }: { message: Message; isUser: boolean }
     ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-gray-300'}`;
 
   return (
-    <button onClick={handleCopy} title="复制为 Markdown" className={cls}>
+    <button onClick={handleCopy} title={label} className={cls}>
       {copied
         ? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
         : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
       }
-      {copied ? '已复制' : 'MD'}
+      {copied ? copiedLabel : 'MD'}
     </button>
   );
 }
 
-function CopyImgButton({ bubbleRef, isUser }: { bubbleRef: React.RefObject<HTMLDivElement | null>; isUser: boolean }) {
+function CopyImgButton({ bubbleRef, isUser, label, copiedLabel }: { bubbleRef: React.RefObject<HTMLDivElement | null>; isUser: boolean; label: string; copiedLabel: string }) {
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -81,14 +82,14 @@ function CopyImgButton({ bubbleRef, isUser }: { bubbleRef: React.RefObject<HTMLD
     ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-gray-300'}`;
 
   return (
-    <button onClick={handleCopy} title="复制为图片" className={cls}>
+    <button onClick={handleCopy} title={label} className={cls}>
       {state === 'loading'
         ? <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
         : state === 'done'
           ? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
           : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
       }
-      {state === 'done' ? '已复制' : state === 'loading' ? '' : 'IMG'}
+      {state === 'done' ? copiedLabel : state === 'loading' ? '' : 'IMG'}
     </button>
   );
 }
@@ -104,7 +105,7 @@ function TokenBadge({ usage }: { usage: TokenUsage }) {
   );
 }
 
-function ThinkingBlock({ text }: { text: string }) {
+function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string; thinkingLabel: string; compressedLabel: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="my-2">
@@ -115,11 +116,11 @@ function ThinkingBlock({ text }: { text: string }) {
         <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <span>思考过程</span>
+        <span>{thinkingLabel}</span>
       </button>
       {open && (
         <div className="mt-1 pl-4 border-l-2 border-gray-700 text-xs text-gray-500 italic whitespace-pre-wrap">
-          {text || '（思考内容已被压缩）'}
+          {text || compressedLabel}
         </div>
       )}
     </div>
@@ -144,12 +145,12 @@ function TextContent({ text }: { text: string }) {
   );
 }
 
-function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number) {
+function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number, thinkingLabel: string, compressedLabel: string) {
   switch (block.type) {
     case 'text':
       return block.text.trim() ? <TextContent key={idx} text={block.text} /> : null;
     case 'thinking':
-      return <ThinkingBlock key={idx} text={block.thinking} />;
+      return <ThinkingBlock key={idx} text={block.thinking} thinkingLabel={thinkingLabel} compressedLabel={compressedLabel} />;
     case 'tool_use':
       return (
         <ToolCallBlock
@@ -171,6 +172,7 @@ interface MessageBubbleProps {
 }
 
 export default function MessageBubble({ message, nextMessage }: MessageBubbleProps) {
+  const { t } = useI18n();
   const isUser = message.type === 'user';
   const bubbleRef = useRef<HTMLDivElement>(null);
 
@@ -197,7 +199,7 @@ export default function MessageBubble({ message, nextMessage }: MessageBubblePro
   if (hasOnlyToolResults) return null;
 
   const timeStr = message.timestamp
-    ? new Date(message.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : '';
 
   return (
@@ -219,14 +221,14 @@ export default function MessageBubble({ message, nextMessage }: MessageBubblePro
             }
           `}
         >
-          {message.content.map((block, idx) => renderBlock(block, toolResults, idx))}
+          {message.content.map((block, idx) => renderBlock(block, toolResults, idx, t('msgThinking'), t('msgThinkingCompressed')))}
         </div>
 
         <div className={`flex items-center gap-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
           <span className="text-xs text-gray-600">{timeStr}</span>
           {message.usage && <TokenBadge usage={message.usage} />}
-          <CopyMdButton message={message} isUser={isUser} />
-          <CopyImgButton bubbleRef={bubbleRef} isUser={isUser} />
+          <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} />
+          <CopyImgButton bubbleRef={bubbleRef} isUser={isUser} label={t('msgCopyImg')} copiedLabel={t('msgCopied')} />
         </div>
       </div>
 

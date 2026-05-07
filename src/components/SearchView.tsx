@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { SessionMeta } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
+import { useI18n } from '@/i18n';
 
 interface SearchResult {
   session: SessionMeta;
@@ -17,6 +18,7 @@ interface SearchViewProps {
 
 export default function SearchView({ onSelectSession, onClose }: SearchViewProps) {
   const { search } = useFolderContext();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function SearchView({ onSelectSession, onClose }: SearchViewProps
             autoFocus
             value={query}
             onChange={e => handleChange(e.target.value)}
-            placeholder="搜索所有会话..."
+            placeholder={t('searchPlaceholder')}
             className="flex-1 bg-transparent text-gray-200 text-sm placeholder:text-gray-600 outline-none"
           />
           <kbd className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded">Esc</kbd>
@@ -57,10 +59,10 @@ export default function SearchView({ onSelectSession, onClose }: SearchViewProps
 
         <div className="max-h-96 overflow-y-auto">
           {loading && (
-            <div className="px-4 py-6 text-center text-xs text-gray-500">搜索中...</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-500">{t('searchSearching')}</div>
           )}
           {!loading && query && results.length === 0 && (
-            <div className="px-4 py-6 text-center text-xs text-gray-500">未找到结果</div>
+            <div className="px-4 py-6 text-center text-xs text-gray-500">{t('searchNoResults')}</div>
           )}
           {results.map((r, idx) => (
             <button
@@ -79,7 +81,7 @@ export default function SearchView({ onSelectSession, onClose }: SearchViewProps
 
         {!query && (
           <div className="px-4 py-4 text-xs text-gray-600 text-center">
-            输入关键词搜索全部对话内容
+            {t('searchHint')}
           </div>
         )}
       </div>

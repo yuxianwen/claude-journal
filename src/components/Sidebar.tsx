@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Project, SessionMeta } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
+import { useI18n } from '@/i18n';
+import LangSwitcher from './LangSwitcher';
 
 function formatDate(iso: string) {
   if (!iso) return '';
@@ -10,10 +12,10 @@ function formatDate(iso: string) {
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-  if (days === 1) return '昨天';
-  if (days < 7) return `${days}天前`;
-  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  if (days === 0) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (days === 1) return d.toLocaleDateString([], { weekday: 'short' });
+  if (days < 7) return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 function formatTokens(n: number) {
@@ -31,6 +33,7 @@ interface SidebarProps {
 
 export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession }: SidebarProps) {
   const { changeFolder, isLocal } = useFolderContext();
+  const { t } = useI18n();
   const [reloading, setReloading] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set(projects.slice(0, 3).map(p => p.id))
@@ -44,35 +47,42 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
     });
   };
 
+  const totalSessions = projects.reduce((a, p) => a + p.sessions.length, 0);
+
   return (
     <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col h-full overflow-hidden">
       <div className="px-4 py-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <h1 className="text-sm font-semibold text-gray-200 tracking-wide">Claude Journal</h1>
-          {isLocal ? (
-            <button
-              onClick={async () => { setReloading(true); location.reload(); }}
-              title="刷新"
-              disabled={reloading}
-              className="text-gray-600 hover:text-gray-400 transition-colors disabled:opacity-40"
-            >
-              <svg className={`w-3.5 h-3.5 ${reloading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              onClick={changeFolder}
-              title="切换文件夹"
-              className="text-gray-600 hover:text-gray-400 transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <LangSwitcher />
+            {isLocal ? (
+              <button
+                onClick={async () => { setReloading(true); location.reload(); }}
+                title={t('sidebarRefresh')}
+                disabled={reloading}
+                className="text-gray-600 hover:text-gray-400 transition-colors disabled:opacity-40"
+              >
+                <svg className={`w-3.5 h-3.5 ${reloading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={changeFolder}
+                title={t('sidebarChangeFolder')}
+                className="text-gray-600 hover:text-gray-400 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">{projects.length} 个项目 · {projects.reduce((a, p) => a + p.sessions.length, 0)} 个会话</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {t('sidebarProjects', { n: projects.length })} · {t('sidebarSessions', { n: totalSessions })}
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -90,7 +100,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
               </svg>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-300 truncate">{project.name}</p>
-                <p className="text-xs text-gray-600 truncate">{project.sessions.length} sessions</p>
+                <p className="text-xs text-gray-600 truncate">{t('sidebarSessionCount', { n: project.sessions.length })}</p>
               </div>
             </button>
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ContentBlock } from '@/types';
+import { useI18n } from '@/i18n';
 
 const TOOL_ICONS: Record<string, string> = {
   Bash: '⚡',
@@ -42,6 +43,7 @@ interface ToolCallBlockProps {
 }
 
 export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const summary = formatInput(block.input, block.name);
@@ -67,14 +69,14 @@ export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
       {expanded && (
         <div className="border-t border-gray-700/50">
           <div className="px-3 py-2 bg-gray-950/50">
-            <p className="text-gray-500 text-xs mb-1">Input</p>
+            <p className="text-gray-500 text-xs mb-1">{t('toolInput')}</p>
             <pre className="text-gray-300 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
               {JSON.stringify(block.input, null, 2)}
             </pre>
           </div>
           {resultText && (
             <div className="px-3 py-2 border-t border-gray-700/50 bg-gray-950/30">
-              <p className="text-gray-500 text-xs mb-1">Output</p>
+              <p className="text-gray-500 text-xs mb-1">{t('toolOutput')}</p>
               <pre className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
                 {resultText.length > 2000 ? resultText.slice(0, 2000) + '\n... (truncated)' : resultText}
               </pre>

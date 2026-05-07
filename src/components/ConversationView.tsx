@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConversationData } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
+import { useI18n } from '@/i18n';
 import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
 
@@ -10,7 +11,7 @@ function titleKey(projectId: string, sessionId: string) {
   return `journal:title:${projectId}/${sessionId}`;
 }
 
-function EditableTitle({ projectId, sessionId, defaultTitle }: { projectId: string; sessionId: string; defaultTitle: string }) {
+function EditableTitle({ projectId, sessionId, defaultTitle, editLabel }: { projectId: string; sessionId: string; defaultTitle: string; editLabel: string }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(() => {
     if (typeof window === 'undefined') return defaultTitle;
@@ -57,7 +58,7 @@ function EditableTitle({ projectId, sessionId, defaultTitle }: { projectId: stri
     <button
       onClick={() => setEditing(true)}
       className="group/title flex items-center gap-1.5 text-left"
-      title="点击编辑标题"
+      title={editLabel}
     >
       <h2 className="text-sm font-medium text-gray-200 leading-tight">{title}</h2>
       <svg className="w-3 h-3 text-gray-600 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,7 +68,7 @@ function EditableTitle({ projectId, sessionId, defaultTitle }: { projectId: stri
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label, copiedLabel }: { text: string; label: string; copiedLabel: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -81,21 +82,21 @@ function CopyButton({ text }: { text: string }) {
       onClick={copy}
       className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors"
     >
-      {copied ? '✓ 已复制' : '复制为 Markdown'}
+      {copied ? copiedLabel : label}
     </button>
   );
 }
 
-function exportToMarkdown(data: ConversationData): string {
-  const lines: string[] = [`# ${data.session.title}`, '', `> ${new Date(data.session.startTime).toLocaleString('zh-CN')}`, ''];
+function exportToMarkdown(data: ConversationData, userLabel: string): string {
+  const lines: string[] = [`# ${data.session.title}`, '', `> ${new Date(data.session.startTime).toLocaleString()}`, ''];
   for (const msg of data.messages) {
-    const role = msg.type === 'user' ? '**用户**' : '**Claude**';
+    const role = msg.type === 'user' ? `**${userLabel}**` : '**Claude**';
     lines.push(`## ${role}`);
     lines.push('');
     for (const block of msg.content) {
       if (block.type === 'text') lines.push(block.text);
-      else if (block.type === 'tool_use') lines.push(`\`\`\`\n[工具调用: ${block.name}]\n${JSON.stringify(block.input, null, 2)}\n\`\`\``);
-      else if (block.type === 'thinking') lines.push(`> 思考: ${block.thinking.slice(0, 200)}...`);
+      else if (block.type === 'tool_use') lines.push(`\`\`\`\n[${block.name}]\n${JSON.stringify(block.input, null, 2)}\n\`\`\``);
+      else if (block.type === 'thinking') lines.push(`> ${block.thinking.slice(0, 200)}...`);
     }
     lines.push('');
   }
@@ -108,6 +109,7 @@ interface ConversationViewProps {
 }
 
 export default function ConversationView({ projectId, sessionId }: ConversationViewProps) {
+  const { t } = useI18n();
   const [data, setData] = useState<ConversationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -120,7 +122,7 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
     setError('');
     getSessionData(projectId, sessionId)
       .then(d => {
-        if (!d) { setError('会话未找到'); setLoading(false); return; }
+        if (!d) { setError(t('convNotFound')); setLoading(false); return; }
         setData(d);
         setLoading(false);
       })
@@ -128,12 +130,12 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
         setError(String(e));
         setLoading(false);
       });
-  }, [projectId, sessionId, getSessionData]);
+  }, [projectId, sessionId, getSessionData, t]);
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-gray-500 text-sm animate-pulse">加载中...</div>
+        <div className="text-gray-500 text-sm animate-pulse">{t('convLoading')}</div>
       </div>
     );
   }
@@ -141,7 +143,7 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
   if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-red-500 text-sm">{error || '加载失败'}</div>
+        <div className="text-red-500 text-sm">{error || t('convNotFound')}</div>
       </div>
     );
   }
@@ -153,10 +155,10 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          <EditableTitle projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} />
+          <EditableTitle projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
           <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
         </div>
-        <CopyButton text={exportToMarkdown(data)} />
+        <CopyButton text={exportToMarkdown(data, t('msgUser'))} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
 
       {/* Stats */}
