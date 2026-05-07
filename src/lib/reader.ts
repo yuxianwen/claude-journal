@@ -3,7 +3,14 @@ import path from 'path';
 import os from 'os';
 import { Project, SessionMeta, TokenUsage, Message, ContentBlock, ConversationData } from '@/types';
 
-const PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
+function getProjectsDir(): string {
+  if (process.platform === 'win32') {
+    return path.join(os.homedir(), 'AppData', 'Roaming', 'Claude', 'projects');
+  }
+  return path.join(os.homedir(), '.claude', 'projects');
+}
+
+const PROJECTS_DIR = getProjectsDir();
 
 function emptyUsage(): TokenUsage {
   return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreateTokens: 0 };

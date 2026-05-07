@@ -30,7 +30,7 @@ function FolderPicker() {
 }
 
 export default function Home() {
-  const { projects, loading, hasFolder } = useFolderContext();
+  const { projects, loading, hasFolder, isLocal } = useFolderContext();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -59,7 +59,7 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const showPicker = !loading && !hasFolder;
+  const showPicker = !loading && !hasFolder && !isLocal;
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
