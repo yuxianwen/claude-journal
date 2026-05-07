@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n';
 import Sidebar from '@/components/Sidebar';
 import ConversationView from '@/components/ConversationView';
 import SearchView from '@/components/SearchView';
+import LangSwitcher from '@/components/LangSwitcher';
 
 function useIsWindows() {
   const [isWindows, setIsWindows] = useState(false);
@@ -21,35 +22,40 @@ function FolderPicker() {
   const isWindows = useIsWindows();
 
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="text-center max-w-md px-4">
-        <div className="text-5xl mb-6">📂</div>
-        <h2 className="text-lg font-semibold text-gray-200 mb-2">{t('pickerTitle')}</h2>
-        <p className="text-sm text-gray-500 mb-4 leading-relaxed">{t('pickerDesc')}</p>
-        <div className="text-left bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 space-y-2.5">
-          <div className={`flex items-start gap-2.5 ${isWindows ? 'opacity-40' : ''}`}>
-            <span className="text-base mt-0.5">🍎</span>
-            <div>
-              <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerMac')}</p>
-              <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">~/.claude/projects</code>
+    <div className="flex-1 flex flex-col">
+      <div className="flex items-center justify-end px-6 py-3 border-b border-gray-800/50">
+        <LangSwitcher />
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="text-5xl mb-6">📂</div>
+          <h2 className="text-lg font-semibold text-gray-200 mb-2">{t('pickerTitle')}</h2>
+          <p className="text-sm text-gray-500 mb-4 leading-relaxed">{t('pickerDesc')}</p>
+          <div className="text-left bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 space-y-2.5">
+            <div className={`flex items-start gap-2.5 ${isWindows ? 'opacity-40' : ''}`}>
+              <span className="text-base mt-0.5">🍎</span>
+              <div>
+                <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerMac')}</p>
+                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">~/.claude/projects</code>
+              </div>
+            </div>
+            <div className={`flex items-start gap-2.5 ${isWindows ? '' : 'opacity-40'}`}>
+              <span className="text-base mt-0.5">🪟</span>
+              <div>
+                <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerWindows')}</p>
+                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\projects</code>
+                <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>
+              </div>
             </div>
           </div>
-          <div className={`flex items-start gap-2.5 ${isWindows ? '' : 'opacity-40'}`}>
-            <span className="text-base mt-0.5">🪟</span>
-            <div>
-              <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerWindows')}</p>
-              <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\projects</code>
-              <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>
-            </div>
-          </div>
+          <button
+            onClick={pickFolder}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {t('pickerButton')}
+          </button>
+          {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
         </div>
-        <button
-          onClick={pickFolder}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {t('pickerButton')}
-        </button>
-        {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
       </div>
     </div>
   );
@@ -108,7 +114,7 @@ export default function Home() {
           <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900/50">
             <div className="text-xs text-gray-600">
               {projects.length > 0 && (
-                <span>{projects.length} 个项目 · {projects.reduce((a, p) => a + p.sessions.length, 0)} 个会话</span>
+                <span>{t('sidebarProjects', { n: projects.length })} · {t('sidebarSessions', { n: projects.reduce((a, p) => a + p.sessions.length, 0) })}</span>
               )}
             </div>
             <button

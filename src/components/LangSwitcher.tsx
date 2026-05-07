@@ -30,7 +30,7 @@ export default function LangSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-[140px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 min-w-[140px]">
           {LOCALES.map(l => (
             <button
               key={l}
