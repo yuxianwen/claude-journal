@@ -6,17 +6,43 @@ import Sidebar from '@/components/Sidebar';
 import ConversationView from '@/components/ConversationView';
 import SearchView from '@/components/SearchView';
 
+function useIsWindows() {
+  const [isWindows, setIsWindows] = useState(false);
+  useEffect(() => {
+    setIsWindows(navigator.userAgent.toLowerCase().includes('win'));
+  }, []);
+  return isWindows;
+}
+
 function FolderPicker() {
   const { pickFolder, error } = useFolderContext();
+  const isWindows = useIsWindows();
 
   return (
     <div className="flex-1 flex items-center justify-center">
-      <div className="text-center max-w-sm">
+      <div className="text-center max-w-md px-4">
         <div className="text-5xl mb-6">📂</div>
         <h2 className="text-lg font-semibold text-gray-200 mb-2">选择 Claude 数据目录</h2>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-          请选择 <code className="text-blue-400 bg-gray-800 px-1 py-0.5 rounded text-xs">~/.claude/projects</code> 文件夹，浏览器将直接从本地读取数据，不会上传到任何服务器。
+        <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+          浏览器将直接从本地读取数据，不会上传到任何服务器。
         </p>
+        <div className="text-left bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 space-y-2.5">
+          <div className={`flex items-start gap-2.5 ${isWindows ? 'opacity-40' : ''}`}>
+            <span className="text-base mt-0.5">🍎</span>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">macOS / Linux</p>
+              <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">~/.claude/projects</code>
+            </div>
+          </div>
+          <div className={`flex items-start gap-2.5 ${isWindows ? '' : 'opacity-40'}`}>
+            <span className="text-base mt-0.5">🪟</span>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Windows</p>
+              <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\projects</code>
+              <p className="text-xs text-gray-600 mt-1">即 <code className="text-gray-500 text-xs">C:\Users\你的用户名\AppData\Roaming\Claude\projects</code></p>
+            </div>
+          </div>
+        </div>
         <button
           onClick={pickFolder}
           className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
