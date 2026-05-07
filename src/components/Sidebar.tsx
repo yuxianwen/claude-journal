@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Project, SessionMeta } from '@/types';
+import { useFolderContext } from '@/contexts/FolderContext';
 
 function formatDate(iso: string) {
   if (!iso) return '';
@@ -29,6 +30,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession }: SidebarProps) {
+  const { changeFolder } = useFolderContext();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set(projects.slice(0, 3).map(p => p.id))
   );
@@ -44,7 +46,18 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
   return (
     <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col h-full overflow-hidden">
       <div className="px-4 py-4 border-b border-gray-800">
-        <h1 className="text-sm font-semibold text-gray-200 tracking-wide">Claude Journal</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-sm font-semibold text-gray-200 tracking-wide">Claude Journal</h1>
+          <button
+            onClick={changeFolder}
+            title="切换文件夹"
+            className="text-gray-600 hover:text-gray-400 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          </button>
+        </div>
         <p className="text-xs text-gray-500 mt-0.5">{projects.length} 个项目 · {projects.reduce((a, p) => a + p.sessions.length, 0)} 个会话</p>
       </div>
 

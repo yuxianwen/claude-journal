@@ -1,6 +1,8 @@
 # Claude Journal
 
-A local web app for browsing and reviewing your Claude Code conversation history. Reads JSONL session files directly from `~/.claude/projects/` — no configuration required.
+A PWA for browsing and reviewing your Claude Code conversation history. Runs entirely in the browser — reads your local `~/.claude/projects/` files directly via the File System Access API. No server, no data uploaded.
+
+**Live Demo:** [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)
 
 **Language:** [简体中文](README.zh-CN.md) | English | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
@@ -15,41 +17,46 @@ A local web app for browsing and reviewing your Claude Code conversation history
 - **Token Stats** — Input / output / cache-hit token counts and estimated cost per session
 - **Full-text Search** — `⌘K` to search across all sessions instantly
 - **Export to Markdown** — Copy any conversation as Markdown with one click
+- **PWA** — Install to your desktop or home screen for a native app experience
 
 ![Search UI](public/screenshot-search.png)
 
-## Quick Start
+## Usage
 
-**Prerequisites:** [Claude Code](https://claude.ai/code) must be installed and have been used at least once, so `~/.claude/projects/` exists locally.
+### Option 1 — Use Online (Recommended)
+
+Open [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org) and click **"选择文件夹"** to grant access to your `~/.claude/projects/` folder. The browser reads files directly from your machine — nothing is uploaded.
+
+Your folder selection is persisted locally (IndexedDB), so subsequent visits load automatically.
+
+> **Browser support:** Chrome, Edge, Safari (macOS). Firefox is not supported (no File System Access API).
+
+### Option 2 — Run Locally
 
 ```bash
-# Clone the repo
 git clone https://github.com/yuxianwen/claude-journal.git
 cd claude-journal
-
-# Install dependencies
 pnpm install
-
-# Start the dev server
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to browse all your Claude Code sessions.
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Tech Stack
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 16 | Framework & API Routes |
+| Next.js | 16 | Framework (static export) |
 | React | 19 | UI |
 | Tailwind CSS | v4 | Styling |
 | Shiki | v4 | Code syntax highlighting |
 | react-markdown | v10 | Markdown rendering |
 | remark-gfm | v4 | GFM extended syntax |
+| File System Access API | — | Browser-native local file reading |
 
 ## Data Source
 
-The app reads local files only — no network requests, no data uploaded. Session data path:
+All data stays on your machine. The app uses the browser's [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) to read session files directly — no network requests, no uploads.
 
 ```
 ~/.claude/projects/

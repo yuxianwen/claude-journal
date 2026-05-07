@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ConversationData } from '@/types';
+import { useFolderContext } from '@/contexts/FolderContext';
 import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
 
@@ -112,12 +113,14 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const { getSessionData } = useFolderContext();
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`/api/sessions?projectId=${encodeURIComponent(projectId)}&sessionId=${encodeURIComponent(sessionId)}`)
-      .then(r => r.json())
+    getSessionData(projectId, sessionId)
       .then(d => {
+        if (!d) { setError('会话未找到'); setLoading(false); return; }
         setData(d);
         setLoading(false);
       })
@@ -125,7 +128,7 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
         setError(String(e));
         setLoading(false);
       });
-  }, [projectId, sessionId]);
+  }, [projectId, sessionId, getSessionData]);
 
   if (loading) {
     return (

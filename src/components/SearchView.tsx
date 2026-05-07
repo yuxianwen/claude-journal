@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { SessionMeta } from '@/types';
+import { useFolderContext } from '@/contexts/FolderContext';
 
 interface SearchResult {
   session: SessionMeta;
@@ -15,6 +16,7 @@ interface SearchViewProps {
 }
 
 export default function SearchView({ onSelectSession, onClose }: SearchViewProps) {
+  const { search } = useFolderContext();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,8 +29,7 @@ export default function SearchView({ onSelectSession, onClose }: SearchViewProps
 
     timerRef.current = setTimeout(() => {
       setLoading(true);
-      fetch(`/api/search?q=${encodeURIComponent(val)}`)
-        .then(r => r.json())
+      search(val)
         .then(data => { setResults(data); setLoading(false); })
         .catch(() => setLoading(false));
     }, 300);
