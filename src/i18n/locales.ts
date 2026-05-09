@@ -54,6 +54,10 @@ export interface T {
   toolOutput: string
   emptySelect: string
   emptySearch: string
+  themeLight: string
+  themeDark: string
+  themeSystem: string
+  sidebarReload: string
 }
 
 // {n} is replaced with the numeric value at runtime
@@ -95,6 +99,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: '输出',
     emptySelect: '从左侧选择一个会话',
     emptySearch: '或按 ⌘K 搜索',
+    themeLight: '亮色',
+    themeDark: '暗色',
+    themeSystem: '跟随系统',
+    sidebarReload: '重新加载',
   },
   'en': {
     pickerTitle: 'Select Claude data directory',
@@ -133,6 +141,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Output',
     emptySelect: 'Select a session from the sidebar',
     emptySearch: 'or press ⌘K to search',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'System',
+    sidebarReload: 'Reload',
   },
   'ja': {
     pickerTitle: 'Claude データフォルダを選択',
@@ -171,6 +183,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: '出力',
     emptySelect: 'サイドバーからセッションを選択',
     emptySearch: 'または ⌘K で検索',
+    themeLight: 'ライト',
+    themeDark: 'ダーク',
+    themeSystem: 'システム',
+    sidebarReload: '再読み込み',
   },
   'ko': {
     pickerTitle: 'Claude 데이터 폴더 선택',
@@ -209,6 +225,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: '출력',
     emptySelect: '사이드바에서 세션을 선택하세요',
     emptySearch: '또는 ⌘K로 검색',
+    themeLight: '라이트',
+    themeDark: '다크',
+    themeSystem: '시스템',
+    sidebarReload: '새로 고침',
   },
   'es': {
     pickerTitle: 'Seleccionar directorio de datos de Claude',
@@ -247,6 +267,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Salida',
     emptySelect: 'Selecciona una sesión de la barra lateral',
     emptySearch: 'o presiona ⌘K para buscar',
+    themeLight: 'Claro',
+    themeDark: 'Oscuro',
+    themeSystem: 'Sistema',
+    sidebarReload: 'Recargar',
   },
   'fr': {
     pickerTitle: 'Sélectionner le dossier Claude',
@@ -285,6 +309,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Sortie',
     emptySelect: 'Sélectionnez une session dans la barre latérale',
     emptySearch: 'ou appuyez sur ⌘K pour rechercher',
+    themeLight: 'Clair',
+    themeDark: 'Sombre',
+    themeSystem: 'Système',
+    sidebarReload: 'Recharger',
   },
   'de': {
     pickerTitle: 'Claude-Datenordner auswählen',
@@ -323,6 +351,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Ausgabe',
     emptySelect: 'Wählen Sie eine Sitzung aus der Seitenleiste',
     emptySearch: 'oder drücken Sie ⌘K zum Suchen',
+    themeLight: 'Hell',
+    themeDark: 'Dunkel',
+    themeSystem: 'System',
+    sidebarReload: 'Neu laden',
   },
   'pt': {
     pickerTitle: 'Selecionar pasta de dados do Claude',
@@ -361,6 +393,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Saída',
     emptySelect: 'Selecione uma sessão na barra lateral',
     emptySearch: 'ou pressione ⌘K para pesquisar',
+    themeLight: 'Claro',
+    themeDark: 'Escuro',
+    themeSystem: 'Sistema',
+    sidebarReload: 'Recarregar',
   },
   'ru': {
     pickerTitle: 'Выбрать папку данных Claude',
@@ -399,6 +435,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'Выход',
     emptySelect: 'Выберите сессию на боковой панели',
     emptySearch: 'или нажмите ⌘K для поиска',
+    themeLight: 'Светлая',
+    themeDark: 'Тёмная',
+    themeSystem: 'Системная',
+    sidebarReload: 'Обновить',
   },
   'ar': {
     pickerTitle: 'اختر مجلد بيانات Claude',
@@ -437,6 +477,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'الإخراج',
     emptySelect: 'اختر جلسة من الشريط الجانبي',
     emptySearch: 'أو اضغط ⌘K للبحث',
+    themeLight: 'فاتح',
+    themeDark: 'داكن',
+    themeSystem: 'النظام',
+    sidebarReload: 'إعادة تحميل',
   },
   'hi': {
     pickerTitle: 'Claude डेटा फ़ोल्डर चुनें',
@@ -475,6 +519,10 @@ export const translations: Record<Locale, T> = {
     toolOutput: 'आउटपुट',
     emptySelect: 'साइडबार से एक सत्र चुनें',
     emptySearch: 'या ⌘K दबाकर खोजें',
+    themeLight: 'लाइट',
+    themeDark: 'डार्क',
+    themeSystem: 'सिस्टम',
+    sidebarReload: 'पुनः लोड करें',
   },
 };
 

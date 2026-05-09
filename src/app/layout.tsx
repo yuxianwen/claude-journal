@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FolderProvider } from "@/contexts/FolderContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { I18nProvider } from "@/i18n";
 import SwRegister from "@/components/SwRegister";
 import { Analytics } from "@vercel/analytics/next";
@@ -40,15 +41,30 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
+      <head>
+        {/* Prevent theme flash on load */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  var t = localStorage.getItem('claude-journal-theme') || 'system';
+  var resolved = t === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : t;
+  document.documentElement.classList.remove('dark','light');
+  document.documentElement.classList.add(resolved);
+})();
+        `}} />
+      </head>
       <body className="min-h-full flex flex-col">
         <SwRegister />
         <Analytics />
         <SpeedInsights />
-        <I18nProvider>
-          <FolderProvider>{children}</FolderProvider>
-        </I18nProvider>
+        <ThemeProvider>
+          <I18nProvider>
+            <FolderProvider>{children}</FolderProvider>
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

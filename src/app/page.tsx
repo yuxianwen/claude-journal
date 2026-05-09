@@ -7,6 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import ConversationView from '@/components/ConversationView';
 import SearchView from '@/components/SearchView';
 import LangSwitcher from '@/components/LangSwitcher';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 
 function useIsWindows() {
   const [isWindows, setIsWindows] = useState(false);
@@ -23,7 +24,8 @@ function FolderPicker() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex items-center justify-end px-6 py-3 border-b border-gray-800/50">
+      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b border-gray-800/50">
+        <ThemeSwitcher />
         <LangSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">

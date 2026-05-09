@@ -19,6 +19,7 @@ interface FolderContextType {
   isLocal: boolean;
   pickFolder: () => Promise<void>;
   changeFolder: () => Promise<void>;
+  reload: () => Promise<void>;
   getSessionData: (projectId: string, sessionId: string) => Promise<ConversationData | null>;
   search: (query: string) => Promise<SearchResult[]>;
 }
@@ -129,6 +130,14 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     await pickFolder();
   }, [isLocal, pickFolder]);
 
+  const reload = useCallback(async () => {
+    if (isLocal) {
+      await loadFromApi();
+    } else if (handleRef.current) {
+      await loadFromHandle(handleRef.current);
+    }
+  }, [isLocal, loadFromApi, loadFromHandle]);
+
   // ── Data access ────────────────────────────────────────────────────────────
 
   const getSessionData = useCallback(async (projectId: string, sessionId: string) => {
@@ -152,7 +161,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   }, [isLocal]);
 
   return (
-    <FolderContext.Provider value={{ projects, loading, error, hasFolder, isLocal, pickFolder, changeFolder, getSessionData, search }}>
+    <FolderContext.Provider value={{ projects, loading, error, hasFolder, isLocal, pickFolder, changeFolder, reload, getSessionData, search }}>
       {children}
     </FolderContext.Provider>
   );
