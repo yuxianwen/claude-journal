@@ -30,12 +30,14 @@ interface SidebarProps {
   selectedProjectId: string | null;
   selectedSessionId: string | null;
   onSelectSession: (projectId: string, sessionId: string) => void;
+  onToggle: () => void;
 }
 
-export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession }: SidebarProps) {
+export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession, onToggle }: SidebarProps) {
   const { changeFolder, reload } = useFolderContext();
   const { t } = useI18n();
   const [reloading, setReloading] = useState(false);
+  const [filter, setFilter] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set(projects.slice(0, 3).map(p => p.id))
   );
@@ -56,8 +58,24 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
 
   const totalSessions = projects.reduce((a, p) => a + p.sessions.length, 0);
 
+  const keyword = filter.trim().toLowerCase();
+  const filteredProjects = keyword
+    ? projects
+        .map(p => ({
+          ...p,
+          sessions: p.sessions.filter(s =>
+            s.title?.toLowerCase().includes(keyword) || p.name.toLowerCase().includes(keyword)
+          ),
+        }))
+        .filter(p => p.sessions.length > 0)
+    : projects;
+
+  const visibleExpanded = keyword
+    ? new Set(filteredProjects.map(p => p.id))
+    : expandedProjects;
+
   return (
-    <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col h-full overflow-hidden">
+    <aside className="w-72 min-w-[18rem] bg-gray-900 border-r border-gray-800 flex flex-col h-full overflow-hidden">
       <div className="px-4 py-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <h1 className="text-sm font-semibold text-gray-200 tracking-wide">Claude Journal</h1>
@@ -83,22 +101,58 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </button>
+            <button
+              onClick={onToggle}
+              title="Collapse sidebar (⌘\)"
+              className="text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
         </div>
         <p className="text-xs text-gray-500 mt-0.5">
-          {t('sidebarProjects', { n: projects.length })} · {t('sidebarSessions', { n: totalSessions })}
+          {keyword
+            ? `${filteredProjects.length} / ${projects.length} projects · ${filteredProjects.reduce((a, p) => a + p.sessions.length, 0)} sessions`
+            : `${t('sidebarProjects', { n: projects.length })} · ${t('sidebarSessions', { n: totalSessions })}`}
         </p>
       </div>
 
+      <div className="px-3 py-2 border-b border-gray-800">
+        <div className="relative">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            placeholder="Filter projects / sessions…"
+            className="w-full bg-gray-800 text-xs text-gray-300 placeholder-gray-600 rounded-md pl-8 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-blue-500/60"
+          />
+          {filter && (
+            <button
+              onClick={() => setFilter('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto">
-        {projects.map(project => (
+        {filteredProjects.map(project => (
           <div key={project.id}>
             <button
               onClick={() => toggleProject(project.id)}
-              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-800 transition-colors text-left group"
+              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-200/60 dark:hover:bg-gray-800 transition-colors text-left group"
             >
               <svg
-                className={`w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0 ${expandedProjects.has(project.id) ? 'rotate-90' : ''}`}
+                className={`w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0 ${visibleExpanded.has(project.id) ? 'rotate-90' : ''}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -109,7 +163,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
               </div>
             </button>
 
-            {expandedProjects.has(project.id) && (
+            {visibleExpanded.has(project.id) && (
               <div className="bg-gray-950">
                 {project.sessions.map((session: SessionMeta) => {
                   const isSelected = selectedProjectId === project.id && selectedSessionId === session.id;
@@ -117,7 +171,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
                     <button
                       key={session.id}
                       onClick={() => onSelectSession(project.id, session.id)}
-                      className={`w-full flex items-start gap-3 px-4 py-2.5 hover:bg-gray-800/60 transition-colors text-left ${isSelected ? 'bg-blue-950/60 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
+                      className={`w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-200/70 dark:hover:bg-gray-800/60 transition-colors text-left ${isSelected ? 'bg-blue-950/60 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
                     >
                       <div className="flex-1 min-w-0">
                         <p className={`text-xs leading-tight truncate ${isSelected ? 'text-blue-300' : 'text-gray-400'}`}>

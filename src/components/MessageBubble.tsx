@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Message, ContentBlock, TokenUsage } from '@/types';
 import ToolCallBlock from './ToolCallBlock';
 import { useI18n } from '@/i18n';
+import { MessageFilters } from './ConversationView';
 
 function messageToMarkdown(message: Message, userLabel: string): string {
   const role = message.type === 'user' ? userLabel : 'Claude';
@@ -33,7 +34,7 @@ function CopyMdButton({ message, isUser, userLabel, label, copiedLabel }: { mess
   };
 
   const cls = `opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-1.5 py-0.5 rounded text-xs
-    ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-gray-300'}`;
+    ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-slate-700 dark:hover:text-gray-300'}`;
 
   return (
     <button onClick={handleCopy} title={label} className={cls}>
@@ -79,7 +80,7 @@ function CopyImgButton({ bubbleRef, isUser, label, copiedLabel }: { bubbleRef: R
   };
 
   const cls = `opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-1.5 py-0.5 rounded text-xs
-    ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-gray-300'}`;
+    ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-slate-700 dark:hover:text-gray-300'}`;
 
   return (
     <button onClick={handleCopy} title={label} className={cls}>
@@ -111,7 +112,7 @@ function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string;
     <div className="my-2">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-400 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-slate-600 dark:hover:text-gray-400 transition-colors"
       >
         <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -127,31 +128,35 @@ function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string;
   );
 }
 
-function TextContent({ text }: { text: string }) {
+function TextContent({ text, isUser }: { text: string; isUser?: boolean }) {
   return (
-    <div className="prose prose-invert prose-sm max-w-none
+    <div className={`prose prose-sm max-w-none
       prose-p:my-1 prose-p:leading-relaxed
-      prose-pre:bg-gray-950 prose-pre:border prose-pre:border-gray-700 prose-pre:text-xs
-      prose-code:bg-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:text-green-300
-      prose-headings:text-gray-200 prose-headings:font-semibold
-      prose-strong:text-gray-200
-      prose-a:text-blue-400
+      prose-pre:bg-gray-950 prose-pre:border prose-pre:border-gray-700 prose-pre:text-xs prose-pre:overflow-x-auto prose-pre:whitespace-pre prose-pre:max-w-full
+      prose-code:bg-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+      prose-headings:font-semibold
       prose-ul:my-1 prose-li:my-0.5
-      prose-blockquote:border-gray-600 prose-blockquote:text-gray-400
+      prose-blockquote:border-gray-600
       prose-table:text-xs
-    ">
+      ${isUser
+        ? 'prose-invert prose-headings:text-gray-200 prose-strong:text-gray-200 prose-a:text-blue-300 prose-blockquote:text-gray-300 prose-code:text-green-300'
+        : 'dark:prose-invert prose-a:text-blue-400 dark:prose-a:text-blue-400 dark:prose-headings:text-gray-200 dark:prose-strong:text-gray-200 dark:prose-code:text-green-300'
+      }
+    `}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
     </div>
   );
 }
 
-function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number, thinkingLabel: string, compressedLabel: string) {
+function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number, thinkingLabel: string, compressedLabel: string, filters: MessageFilters, isUser: boolean) {
   switch (block.type) {
     case 'text':
-      return block.text.trim() ? <TextContent key={idx} text={block.text} /> : null;
+      return block.text.trim() ? <TextContent key={idx} text={block.text} isUser={isUser} /> : null;
     case 'thinking':
+      if (!filters.thinking) return null;
       return <ThinkingBlock key={idx} text={block.thinking} thinkingLabel={thinkingLabel} compressedLabel={compressedLabel} />;
     case 'tool_use':
+      if (!filters.tools) return null;
       return (
         <ToolCallBlock
           key={idx}
@@ -160,7 +165,7 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
         />
       );
     case 'tool_result':
-      return null; // tool results are shown inline in the tool_use block
+      return null;
     default:
       return null;
   }
@@ -169,9 +174,10 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
 interface MessageBubbleProps {
   message: Message;
   nextMessage?: Message;
+  filters: MessageFilters;
 }
 
-export default function MessageBubble({ message, nextMessage }: MessageBubbleProps) {
+export default function MessageBubble({ message, nextMessage, filters }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -210,18 +216,18 @@ export default function MessageBubble({ message, nextMessage }: MessageBubblePro
         </div>
       )}
 
-      <div className={`max-w-[85%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+      <div className={`max-w-[85%] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
         <div
           ref={bubbleRef}
           className={`
-            rounded-2xl px-4 py-2.5
+            rounded-2xl px-4 py-2.5 break-all max-w-full overflow-x-auto
             ${isUser
-              ? 'bg-blue-600 text-white rounded-br-sm'
-              : 'bg-gray-800 text-gray-200 rounded-bl-sm'
+              ? 'user-bubble bg-blue-600 text-white rounded-br-sm'
+              : 'assistant-bubble bg-gray-800 text-gray-200 rounded-bl-sm'
             }
           `}
         >
-          {message.content.map((block, idx) => renderBlock(block, toolResults, idx, t('msgThinking'), t('msgThinkingCompressed')))}
+          {message.content.map((block, idx) => renderBlock(block, toolResults, idx, t('msgThinking'), t('msgThinkingCompressed'), filters, isUser))}
         </div>
 
         <div className={`flex items-center gap-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>

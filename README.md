@@ -11,12 +11,15 @@ A PWA for browsing and reviewing your Claude Code conversation history. Runs ent
 ## Features
 
 - **Project & Session Browser** — All projects grouped by working directory, with full session history in the sidebar
+- **Sidebar Filter** — Type a keyword to instantly filter projects and sessions; match count updates in real time
 - **Conversation Rendering** — Full Markdown rendering, syntax-highlighted code blocks (Shiki), GFM tables & task lists
 - **Tool Call Visualization** — See every tool call Claude made (Bash, file reads/writes, etc.) and its output
 - **Thinking Blocks** — Collapsible display of Claude's reasoning process
 - **Token Stats** — Input / output / cache-hit token counts and estimated cost per session
 - **Full-text Search** — `⌘K` to search across all sessions instantly
-- **Export to Markdown** — Copy any conversation as Markdown with one click
+- **Export to Markdown / Image** — Copy any message as Markdown or as a screenshot with one click
+- **Theme Switcher** — Light, dark, or system theme with persistent preference
+- **11-language UI** — Auto-detects browser locale; switch at any time via the language picker
 - **PWA** — Install to your desktop or home screen for a native app experience
 
 ![Search UI](public/screenshot-search.png)
@@ -72,4 +75,5 @@ Each `.jsonl` file corresponds to one Claude Code session and contains the full 
 | Shortcut | Action |
 |----------|--------|
 | `⌘K` | Open full-text search |
+| `⌘\` | Toggle sidebar |
 | `Esc` | Close search |
