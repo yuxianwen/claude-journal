@@ -9,12 +9,15 @@ Aplicativo web local para navegar e revisar o histórico de conversas do Claude 
 ## Funcionalidades
 
 - **Explorador de projetos e sessões** — Todos os projetos agrupados por diretório de trabalho, com histórico completo na barra lateral
+- **Filtro da barra lateral** — Digite uma palavra-chave para filtrar projetos e sessões em tempo real; a contagem de correspondências é atualizada instantaneamente
 - **Renderização de conversas** — Markdown completo, blocos de código com destaque de sintaxe (Shiki), tabelas GFM e listas de tarefas
 - **Visualização de chamadas de ferramentas** — Mostra cada chamada de ferramenta feita pelo Claude (Bash, leitura/escrita de arquivos, etc.) e seu resultado
 - **Blocos de pensamento** — Exibição recolhível do processo de raciocínio do Claude
 - **Estatísticas de tokens** — Contagem de tokens de entrada / saída / cache e custo estimado por sessão
 - **Pesquisa de texto completo** — `⌘K` para pesquisar em todas as sessões instantaneamente
-- **Exportar para Markdown** — Copie qualquer conversa como Markdown com um clique
+- **Exportar para Markdown / Imagem** — Copie qualquer mensagem como Markdown ou captura de tela com um clique
+- **Seletor de tema** — Tema claro, escuro ou do sistema com preferência persistente
+- **Interface em 11 idiomas** — Detecta automaticamente o idioma do navegador; troca a qualquer momento pelo seletor
 
 ![Interface de pesquisa](public/screenshot-search.png)
 
@@ -65,4 +68,5 @@ Cada arquivo `.jsonl` corresponde a uma sessão do Claude Code e contém o hist�
 | Atalho | Ação |
 |--------|------|
 | `⌘K` | Abrir pesquisa de texto completo |
+| `⌘\` | Mostrar / ocultar barra lateral |
 | `Esc` | Fechar pesquisa |

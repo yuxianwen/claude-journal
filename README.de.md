@@ -9,12 +9,15 @@ Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude Code Konversation
 ## Funktionen
 
 - **Projekt- & Sitzungs-Browser** — Alle Projekte nach Arbeitsverzeichnis gruppiert, mit vollständigem Sitzungsverlauf in der Seitenleiste
+- **Seitenleisten-Filter** — Schlüsselwort eingeben und Projekte/Sitzungen in Echtzeit filtern; Trefferanzahl wird sofort aktualisiert
 - **Konversations-Rendering** — Vollständiges Markdown-Rendering, syntaxhervorgehobene Code-Blöcke (Shiki), GFM-Tabellen & Aufgabenlisten
 - **Werkzeugaufruf-Visualisierung** — Jeder Werkzeugaufruf von Claude (Bash, Dateilesen/-schreiben usw.) und sein Ergebnis wird angezeigt
 - **Denkblöcke** — Einklappbare Anzeige von Claudes Denkprozess
 - **Token-Statistiken** — Anzahl der Eingabe-/Ausgabe-/Cache-Tokens und geschätzte Kosten pro Sitzung
 - **Volltextsuche** — `⌘K` für sofortige sitzungsübergreifende Suche
-- **Als Markdown exportieren** — Jede Konversation mit einem Klick als Markdown kopieren
+- **Als Markdown / Bild exportieren** — Beliebige Nachricht als Markdown oder Screenshot mit einem Klick kopieren
+- **Theme-Umschalter** — Helles, dunkles oder System-Theme mit gespeicherter Einstellung
+- **11-sprachige Benutzeroberfläche** — Erkennt automatisch die Browser-Sprache; jederzeit über den Sprachauswähler wechselbar
 
 ![Suchoberfläche](public/screenshot-search.png)
 
@@ -65,4 +68,5 @@ Jede `.jsonl`-Datei entspricht einer Claude Code Sitzung und enthält den vollst
 | Kürzel | Aktion |
 |--------|--------|
 | `⌘K` | Volltextsuche öffnen |
+| `⌘\` | Seitenleiste ein-/ausblenden |
 | `Esc` | Suche schließen |
