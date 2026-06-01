@@ -68,7 +68,9 @@ export default function Home() {
   const { t } = useI18n();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [highlightMessageId, setHighlightMessageId] = useState<string | undefined>(undefined);
   const [showSearch, setShowSearch] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (projects.length > 0 && !selectedSessionId) {
@@ -77,9 +79,10 @@ export default function Home() {
     }
   }, [projects, selectedSessionId]);
 
-  const handleSelectSession = useCallback((projectId: string, sessionId: string) => {
+  const handleSelectSession = useCallback((projectId: string, sessionId: string, messageUuid?: string) => {
     setSelectedProjectId(projectId);
     setSelectedSessionId(sessionId);
+    setHighlightMessageId(messageUuid);
   }, []);
 
   useEffect(() => {
@@ -87,6 +90,10 @@ export default function Home() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setShowSearch(true);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault();
+        setSidebarOpen(o => !o);
       }
       if (e.key === 'Escape') setShowSearch(false);
     };
@@ -98,30 +105,50 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
-      {loading ? (
-        <div className="w-72 bg-gray-900 border-r border-gray-800 flex items-center justify-center">
-          <div className="text-gray-600 text-xs animate-pulse">{t('convLoading')}</div>
+      {/* Collapsible sidebar wrapper */}
+      {!showPicker && (
+        <div className={`flex-shrink-0 overflow-hidden transition-all duration-200 ease-in-out ${sidebarOpen ? 'w-72' : 'w-0'}`}>
+          {loading ? (
+            <div className="w-72 bg-gray-900 border-r border-gray-800 h-full flex items-center justify-center">
+              <div className="text-gray-600 text-xs animate-pulse">{t('convLoading')}</div>
+            </div>
+          ) : hasFolder ? (
+            <Sidebar
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              selectedSessionId={selectedSessionId}
+              onSelectSession={handleSelectSession}
+              onToggle={() => setSidebarOpen(false)}
+            />
+          ) : null}
         </div>
-      ) : hasFolder ? (
-        <Sidebar
-          projects={projects}
-          selectedProjectId={selectedProjectId}
-          selectedSessionId={selectedSessionId}
-          onSelectSession={handleSelectSession}
-        />
-      ) : null}
+      )}
 
       <main className="flex-1 flex flex-col min-w-0">
         {!showPicker && (
-          <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900/50">
-            <div className="text-xs text-gray-600">
-              {projects.length > 0 && (
-                <span>{t('sidebarProjects', { n: projects.length })} · {t('sidebarSessions', { n: projects.reduce((a, p) => a + p.sessions.length, 0) })}</span>
+          <div className="flex items-center justify-between px-3 py-3 border-b border-gray-800 bg-gray-900/50">
+            <div className="flex items-center gap-2">
+              {/* Expand button — visible only when sidebar is closed */}
+              {(hasFolder || loading) && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  title="Open sidebar (⌘\)"
+                  className={`p-1.5 rounded text-gray-600 hover:text-slate-700 dark:hover:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800/40 transition-all duration-200 flex-shrink-0 ${sidebarOpen ? 'opacity-0 pointer-events-none w-0 p-0 overflow-hidden' : 'opacity-100'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6h18M3 12h18M3 18h18" />
+                  </svg>
+                </button>
               )}
+              <div className="text-xs text-gray-600">
+                {projects.length > 0 && (
+                  <span>{t('sidebarProjects', { n: projects.length })} · {t('sidebarSessions', { n: projects.reduce((a, p) => a + p.sessions.length, 0) })}</span>
+                )}
+              </div>
             </div>
             <button
               onClick={() => setShowSearch(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-500 hover:text-slate-700 hover:border-slate-400 dark:hover:text-gray-300 dark:hover:border-gray-600 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -139,6 +166,7 @@ export default function Home() {
             key={`${selectedProjectId}/${selectedSessionId}`}
             projectId={selectedProjectId}
             sessionId={selectedSessionId}
+            highlightMessageId={highlightMessageId}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center">

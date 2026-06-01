@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Enable dark: variant based on html.dark class (set by ThemeContext) */
+@variant dark (&:is(.dark *));
+
 :root {
   --background: #030712;
   --foreground: #f3f4f6;
@@ -21,27 +24,103 @@ html, body {
   height: 100%;
 }
 
-/* Light mode overrides */
+/* ─────────────────────────────────────────────────────────────
+   Light mode token map
+
+   Dark bg hierarchy:  gray-950 < gray-900 < gray-800 (deeper = darker)
+   Light bg hierarchy: slate-100 > slate-50 > slate-200 (mirror the depth)
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Solid backgrounds ── */
 html.light .bg-gray-950 { background-color: #f1f5f9; }
 html.light .bg-gray-900 { background-color: #f8fafc; }
 html.light .bg-gray-800 { background-color: #e2e8f0; }
-html.light .bg-gray-900\/50 { background-color: rgba(248,250,252,0.8); }
-html.light .bg-gray-900\/60 { background-color: rgba(241,245,249,0.9); }
-html.light .bg-gray-950\/50 { background-color: rgba(241,245,249,0.8); }
-html.light .bg-gray-950\/30 { background-color: rgba(241,245,249,0.6); }
-html.light .bg-gray-800\/40 { background-color: rgba(226,232,240,0.6); }
-html.light .bg-gray-800\/60 { background-color: rgba(226,232,240,0.8); }
-html.light .border-gray-800 { border-color: #cbd5e1; }
-html.light .border-gray-700 { border-color: #94a3b8; }
-html.light .border-gray-700\/50 { border-color: rgba(148,163,184,0.5); }
+html.light .bg-blue-950 { background-color: #eff6ff; }
+
+/* ── Translucent backgrounds ── */
+html.light .bg-gray-900\/50  { background-color: rgba(248,250,252,0.85); }
+html.light .bg-gray-900\/60  { background-color: rgba(248,250,252,0.95); }
+html.light .bg-gray-950\/50  { background-color: rgba(241,245,249,0.80); }
+html.light .bg-gray-950\/30  { background-color: rgba(241,245,249,0.55); }
+html.light .bg-gray-800\/40  { background-color: rgba(226,232,240,0.55); }
+html.light .bg-gray-800\/60  { background-color: rgba(226,232,240,0.80); }
+html.light .bg-blue-950\/60  { background-color: rgba(219,234,254,0.90); }
+html.light .bg-blue-950\/40  { background-color: rgba(219,234,254,0.65); }
+
+/* ── Borders ── */
+html.light .border-gray-800     { border-color: #e2e8f0; }
+html.light .border-gray-800\/50 { border-color: rgba(226,232,240,0.65); }
+html.light .border-gray-700     { border-color: #cbd5e1; }
+html.light .border-gray-700\/50 { border-color: rgba(203,213,225,0.50); }
+html.light .border-gray-600     { border-color: #94a3b8; }
+
+/* ── Text — primary to muted ── */
+html.light .text-gray-100 { color: #0f172a; }
 html.light .text-gray-200 { color: #1e293b; }
 html.light .text-gray-300 { color: #334155; }
 html.light .text-gray-400 { color: #475569; }
 html.light .text-gray-500 { color: #64748b; }
 html.light .text-gray-600 { color: #94a3b8; }
-html.light .text-gray-700 { color: #94a3b8; }
-html.light .bg-blue-950\/60 { background-color: rgba(219,234,254,0.8); }
-html.light .bg-orange-600 { background-color: #ea580c; }
-html.light .prose-invert { --tw-prose-body: #334155; --tw-prose-headings: #1e293b; --tw-prose-code: #0f172a; }
-html.light code { background-color: #e2e8f0 !important; color: #0f172a !important; }
-html.light pre { background-color: #e2e8f0 !important; border-color: #cbd5e1 !important; }
+html.light .text-gray-700 { color: #64748b; }
+
+/* ── Accent colors — contrast-safe on light backgrounds ── */
+html.light .text-blue-400   { color: #2563eb; }
+html.light .text-blue-300   { color: #3b82f6; }
+html.light .text-green-300  { color: #15803d; }
+html.light .text-green-700  { color: #15803d; }
+html.light .text-purple-400 { color: #7c3aed; }
+html.light .bg-orange-600   { background-color: #ea580c; }
+
+/* ── Hover states ── */
+html.light .hover\:bg-gray-800:hover     { background-color: #e2e8f0; }
+html.light .hover\:bg-gray-800\/60:hover { background-color: #e2e8f0; }
+html.light .hover\:text-gray-200:hover   { color: #1e293b; }
+html.light .hover\:text-gray-300:hover   { color: #334155; }
+html.light .hover\:text-gray-400:hover   { color: #475569; }
+html.light .hover\:border-gray-600:hover { border-color: #94a3b8; }
+
+/* ── Prose — full variable set ── */
+html.light .prose-invert {
+  --tw-prose-body:          #334155;
+  --tw-prose-headings:      #0f172a;
+  --tw-prose-lead:          #475569;
+  --tw-prose-links:         #2563eb;
+  --tw-prose-bold:          #0f172a;
+  --tw-prose-counters:      #64748b;
+  --tw-prose-bullets:       #94a3b8;
+  --tw-prose-hr:            #e2e8f0;
+  --tw-prose-quotes:        #334155;
+  --tw-prose-quote-borders: #94a3b8;
+  --tw-prose-captions:      #64748b;
+  --tw-prose-code:          #15803d;
+  --tw-prose-pre-code:      #334155;
+  --tw-prose-pre-bg:        #f1f5f9;
+  --tw-prose-th-borders:    #cbd5e1;
+  --tw-prose-td-borders:    #e2e8f0;
+}
+
+html.light code { background-color: #e2e8f0 !important; color: #15803d !important; }
+html.light pre  { background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+
+/* User bubble (blue bg) — restore white prose regardless of light mode */
+html.light .user-bubble .prose-invert {
+  --tw-prose-body:          rgba(255,255,255,0.95);
+  --tw-prose-headings:      #ffffff;
+  --tw-prose-lead:          rgba(255,255,255,0.85);
+  --tw-prose-links:         rgba(255,255,255,0.90);
+  --tw-prose-bold:          #ffffff;
+  --tw-prose-counters:      rgba(255,255,255,0.80);
+  --tw-prose-bullets:       rgba(255,255,255,0.70);
+  --tw-prose-hr:            rgba(255,255,255,0.25);
+  --tw-prose-quotes:        rgba(255,255,255,0.90);
+  --tw-prose-quote-borders: rgba(255,255,255,0.35);
+  --tw-prose-code:          rgba(255,255,255,0.95);
+  --tw-prose-pre-code:      rgba(255,255,255,0.90);
+  --tw-prose-th-borders:    rgba(255,255,255,0.25);
+  --tw-prose-td-borders:    rgba(255,255,255,0.15);
+}
+html.light .user-bubble code { background-color: rgba(255,255,255,0.20) !important; color: #ffffff !important; }
+html.light .user-bubble pre  { background-color: rgba(0,0,0,0.10) !important; border-color: rgba(255,255,255,0.20) !important; }
+
+/* Assistant bubble: inline code needs a distinct background (bubble bg = #e2e8f0, code bg would be same) */
+html.light .assistant-bubble code { background-color: #d1dce8 !important; color: #15803d !important; }

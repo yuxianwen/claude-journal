@@ -9,10 +9,11 @@ interface SearchResult {
   session: SessionMeta;
   projectName: string;
   excerpt: string;
+  messageUuid: string;
 }
 
 interface SearchViewProps {
-  onSelectSession: (projectId: string, sessionId: string) => void;
+  onSelectSession: (projectId: string, sessionId: string, messageUuid?: string) => void;
   onClose: () => void;
 }
 
@@ -67,8 +68,8 @@ export default function SearchView({ onSelectSession, onClose }: SearchViewProps
           {results.map((r, idx) => (
             <button
               key={idx}
-              onClick={() => { onSelectSession(r.session.projectId, r.session.id); onClose(); }}
-              className="w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors border-b border-gray-800/50"
+              onClick={() => { onSelectSession(r.session.projectId, r.session.id, r.messageUuid || undefined); onClose(); }}
+              className="w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors border-b border-gray-800/50"
             >
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-xs font-medium text-blue-400 truncate">{r.session.title}</span>

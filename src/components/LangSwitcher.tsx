@@ -38,7 +38,7 @@ export default function LangSwitcher() {
               className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                 l === locale
                   ? 'text-blue-400 bg-blue-950/40'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                  : 'text-gray-400 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-gray-800 dark:hover:text-gray-200'
               }`}
             >
               {LOCALE_NAMES[l as Locale]}

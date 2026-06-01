@@ -45,7 +45,7 @@ export default function ThemeSwitcher() {
               className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 transition-colors ${
                 o.value === theme
                   ? 'text-blue-400 bg-blue-950/40'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                  : 'text-gray-400 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <span>{o.icon}</span>

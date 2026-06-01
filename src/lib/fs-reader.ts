@@ -201,10 +201,24 @@ export async function getSession(
   return { session: sessionMeta, messages };
 }
 
+function extractMessageText(line: Record<string, unknown>): string {
+  const rawContent = (line.message as Record<string, unknown>)?.content;
+  if (typeof rawContent === 'string') return rawContent;
+  if (Array.isArray(rawContent)) {
+    return rawContent.map((c: Record<string, unknown>) => {
+      if (c.type === 'text') return String(c.text || '');
+      if (c.type === 'thinking') return String(c.thinking || '');
+      return '';
+    }).filter(Boolean).join(' ');
+  }
+  return '';
+}
+
 export interface SearchResult {
   session: SessionMeta;
   projectName: string;
   excerpt: string;
+  messageUuid: string;
 }
 
 export async function searchSessions(
@@ -225,19 +239,30 @@ export async function searchSessions(
       const file = await (fileHandle as FileSystemFileHandle).getFile();
       const content = await file.text();
 
-      const idx = content.toLowerCase().indexOf(lowerQuery);
-      if (idx === -1) continue;
-
       const sessionId = fileName.replace(/\.jsonl$/, '');
       const session = parseSessionMeta(dirName, sessionId, content);
       const cwd = session.cwd || dirName.replace(/^-/, '/').replace(/-/g, '/');
       const projectName = cwd ? cwd.split('/').filter(Boolean).pop() || dirName : dirName;
 
-      const start = Math.max(0, idx - 80);
-      const end = Math.min(content.length, idx + query.length + 80);
-      const excerpt = (start > 0 ? '...' : '') + content.slice(start, end).replace(/\n/g, ' ') + (end < content.length ? '...' : '');
+      const lines = content.split('\n').filter(Boolean);
+      for (const rawLine of lines) {
+        let parsed: Record<string, unknown>;
+        try { parsed = JSON.parse(rawLine); } catch { continue; }
+        if (parsed.type !== 'user' && parsed.type !== 'assistant') continue;
 
-      results.push({ session, projectName, excerpt });
+        const text = extractMessageText(parsed);
+        const idx = text.toLowerCase().indexOf(lowerQuery);
+        if (idx === -1) continue;
+
+        const uuid = String(parsed.uuid || '');
+        const start = Math.max(0, idx - 80);
+        const end = Math.min(text.length, idx + query.length + 80);
+        const excerpt = (start > 0 ? '...' : '') + text.slice(start, end) + (end < text.length ? '...' : '');
+
+        results.push({ session, projectName, excerpt, messageUuid: uuid });
+        break;
+      }
+
       if (results.length >= 50) return results;
     }
   }

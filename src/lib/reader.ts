@@ -215,26 +215,50 @@ export function getSession(projectId: string, sessionId: string): ConversationDa
   return { session: sessionMeta, messages };
 }
 
-export function searchSessions(query: string): Array<{ session: SessionMeta; projectName: string; excerpt: string }> {
+function extractMessageText(line: Record<string, unknown>): string {
+  const rawContent = (line.message as Record<string, unknown>)?.content;
+  if (typeof rawContent === 'string') return rawContent;
+  if (Array.isArray(rawContent)) {
+    return rawContent.map((c: Record<string, unknown>) => {
+      if (c.type === 'text') return String(c.text || '');
+      if (c.type === 'thinking') return String(c.thinking || '');
+      return '';
+    }).filter(Boolean).join(' ');
+  }
+  return '';
+}
+
+export function searchSessions(query: string): Array<{ session: SessionMeta; projectName: string; excerpt: string; messageUuid: string }> {
   if (!query.trim()) return [];
 
   const projects = getAllProjects();
-  const results: Array<{ session: SessionMeta; projectName: string; excerpt: string }> = [];
+  const results: Array<{ session: SessionMeta; projectName: string; excerpt: string; messageUuid: string }> = [];
   const lowerQuery = query.toLowerCase();
 
   for (const project of projects) {
     for (const session of project.sessions) {
       const filePath = path.join(PROJECTS_DIR, project.id, `${session.id}.jsonl`);
-      const content = fs.readFileSync(filePath, 'utf-8');
+      const rawContent = fs.readFileSync(filePath, 'utf-8');
+      const lines = rawContent.split('\n').filter(Boolean);
 
-      const idx = content.toLowerCase().indexOf(lowerQuery);
-      if (idx === -1) continue;
+      for (const rawLine of lines) {
+        let parsed: Record<string, unknown>;
+        try { parsed = JSON.parse(rawLine); } catch { continue; }
+        if (parsed.type !== 'user' && parsed.type !== 'assistant') continue;
 
-      const start = Math.max(0, idx - 80);
-      const end = Math.min(content.length, idx + query.length + 80);
-      const excerpt = (start > 0 ? '...' : '') + content.slice(start, end).replace(/\n/g, ' ') + (end < content.length ? '...' : '');
+        const text = extractMessageText(parsed);
+        const idx = text.toLowerCase().indexOf(lowerQuery);
+        if (idx === -1) continue;
 
-      results.push({ session, projectName: project.name, excerpt });
+        const uuid = String(parsed.uuid || '');
+        const start = Math.max(0, idx - 80);
+        const end = Math.min(text.length, idx + query.length + 80);
+        const excerpt = (start > 0 ? '...' : '') + text.slice(start, end) + (end < text.length ? '...' : '');
+
+        results.push({ session, projectName: project.name, excerpt, messageUuid: uuid });
+        break;
+      }
+
       if (results.length >= 50) return results;
     }
   }

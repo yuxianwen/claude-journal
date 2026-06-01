@@ -58,6 +58,10 @@ export interface T {
   themeDark: string
   themeSystem: string
   sidebarReload: string
+  filterThinking: string
+  filterTools: string
+  filterUser: string
+  filterClaude: string
 }
 
 // {n} is replaced with the numeric value at runtime
@@ -103,6 +107,10 @@ export const translations: Record<Locale, T> = {
     themeDark: '暗色',
     themeSystem: '跟随系统',
     sidebarReload: '重新加载',
+    filterThinking: '思考',
+    filterTools: '工具',
+    filterUser: '用户',
+    filterClaude: 'Claude',
   },
   'en': {
     pickerTitle: 'Select Claude data directory',
@@ -145,6 +153,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Dark',
     themeSystem: 'System',
     sidebarReload: 'Reload',
+    filterThinking: 'Thinking',
+    filterTools: 'Tools',
+    filterUser: 'User',
+    filterClaude: 'Claude',
   },
   'ja': {
     pickerTitle: 'Claude データフォルダを選択',
@@ -187,6 +199,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'ダーク',
     themeSystem: 'システム',
     sidebarReload: '再読み込み',
+    filterThinking: '思考',
+    filterTools: 'ツール',
+    filterUser: 'ユーザー',
+    filterClaude: 'Claude',
   },
   'ko': {
     pickerTitle: 'Claude 데이터 폴더 선택',
@@ -229,6 +245,10 @@ export const translations: Record<Locale, T> = {
     themeDark: '다크',
     themeSystem: '시스템',
     sidebarReload: '새로 고침',
+    filterThinking: '추론',
+    filterTools: '도구',
+    filterUser: '사용자',
+    filterClaude: 'Claude',
   },
   'es': {
     pickerTitle: 'Seleccionar directorio de datos de Claude',
@@ -271,6 +291,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Oscuro',
     themeSystem: 'Sistema',
     sidebarReload: 'Recargar',
+    filterThinking: 'Razonamiento',
+    filterTools: 'Herramientas',
+    filterUser: 'Usuario',
+    filterClaude: 'Claude',
   },
   'fr': {
     pickerTitle: 'Sélectionner le dossier Claude',
@@ -313,6 +337,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Sombre',
     themeSystem: 'Système',
     sidebarReload: 'Recharger',
+    filterThinking: 'Réflexion',
+    filterTools: 'Outils',
+    filterUser: 'Utilisateur',
+    filterClaude: 'Claude',
   },
   'de': {
     pickerTitle: 'Claude-Datenordner auswählen',
@@ -355,6 +383,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Dunkel',
     themeSystem: 'System',
     sidebarReload: 'Neu laden',
+    filterThinking: 'Denken',
+    filterTools: 'Werkzeuge',
+    filterUser: 'Benutzer',
+    filterClaude: 'Claude',
   },
   'pt': {
     pickerTitle: 'Selecionar pasta de dados do Claude',
@@ -397,6 +429,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Escuro',
     themeSystem: 'Sistema',
     sidebarReload: 'Recarregar',
+    filterThinking: 'Raciocínio',
+    filterTools: 'Ferramentas',
+    filterUser: 'Usuário',
+    filterClaude: 'Claude',
   },
   'ru': {
     pickerTitle: 'Выбрать папку данных Claude',
@@ -439,6 +475,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'Тёмная',
     themeSystem: 'Системная',
     sidebarReload: 'Обновить',
+    filterThinking: 'Мышление',
+    filterTools: 'Инструменты',
+    filterUser: 'Польз.',
+    filterClaude: 'Claude',
   },
   'ar': {
     pickerTitle: 'اختر مجلد بيانات Claude',
@@ -481,6 +521,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'داكن',
     themeSystem: 'النظام',
     sidebarReload: 'إعادة تحميل',
+    filterThinking: 'التفكير',
+    filterTools: 'الأدوات',
+    filterUser: 'مستخدم',
+    filterClaude: 'Claude',
   },
   'hi': {
     pickerTitle: 'Claude डेटा फ़ोल्डर चुनें',
@@ -523,6 +567,10 @@ export const translations: Record<Locale, T> = {
     themeDark: 'डार्क',
     themeSystem: 'सिस्टम',
     sidebarReload: 'पुनः लोड करें',
+    filterThinking: 'सोच',
+    filterTools: 'उपकरण',
+    filterUser: 'उपयोगकर्ता',
+    filterClaude: 'Claude',
   },
 };
 

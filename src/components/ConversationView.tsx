@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ConversationData } from '@/types';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { ConversationData, Message } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import MessageBubble from './MessageBubble';
@@ -80,7 +80,7 @@ function CopyButton({ text, label, copiedLabel }: { text: string; label: string;
   return (
     <button
       onClick={copy}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-400 hover:text-slate-800 hover:border-slate-400 dark:hover:text-gray-200 dark:hover:border-gray-600 transition-colors"
     >
       {copied ? copiedLabel : label}
     </button>
@@ -103,17 +103,67 @@ function exportToMarkdown(data: ConversationData, userLabel: string): string {
   return lines.join('\n');
 }
 
+export interface MessageFilters {
+  thinking: boolean;
+  tools: boolean;
+  userMessages: boolean;
+  assistantMessages: boolean;
+}
+
+function messageHasVisibleContent(msg: Message, filters: MessageFilters): boolean {
+  if (msg.type === 'user' && !filters.userMessages) return false;
+  if (msg.type === 'assistant' && !filters.assistantMessages) return false;
+  if (msg.content.every(b => b.type === 'tool_result')) return false;
+  return msg.content.some(block => {
+    if (block.type === 'tool_result') return false;
+    if (block.type === 'thinking' && !filters.thinking) return false;
+    if (block.type === 'tool_use' && !filters.tools) return false;
+    return true;
+  });
+}
+
+function FilterChip({
+  active, onToggle, icon, label,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  icon: string;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-all select-none border ${
+        active
+          ? 'border-gray-700/50 dark:border-gray-700/50 border-slate-200 text-gray-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800/40'
+          : 'border-slate-200/60 dark:border-gray-700/30 text-slate-400/50 dark:text-gray-700 line-through'
+      }`}
+    >
+      <span>{icon}</span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
 interface ConversationViewProps {
   projectId: string;
   sessionId: string;
+  highlightMessageId?: string;
 }
 
-export default function ConversationView({ projectId, sessionId }: ConversationViewProps) {
+export default function ConversationView({ projectId, sessionId, highlightMessageId }: ConversationViewProps) {
   const { t } = useI18n();
   const [data, setData] = useState<ConversationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFilter = useCallback((key: keyof MessageFilters) => {
+    setFilters(f => ({ ...f, [key]: !f[key] }));
+  }, []);
 
   const { getSessionData } = useFolderContext();
 
@@ -132,6 +182,19 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
       });
   }, [projectId, sessionId, getSessionData, t]);
 
+  useEffect(() => {
+    if (!data || !highlightMessageId) return;
+    const timer = setTimeout(() => {
+      const el = scrollContainerRef.current?.querySelector(`[data-message-id="${highlightMessageId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedId(highlightMessageId);
+        setTimeout(() => setHighlightedId(null), 3000);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [data, highlightMessageId]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -148,15 +211,24 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
     );
   }
 
-  const visibleMessages = data.messages.filter(m => !m.isSidechain);
+  const visibleMessages = data.messages
+    .filter(m => !m.isSidechain)
+    .filter(m => messageHasVisibleContent(m, filters));
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between">
+      <div className="px-6 py-3 border-b border-gray-800 flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <EditableTitle projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
           <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <FilterChip active={filters.thinking} onToggle={() => toggleFilter('thinking')} icon="💭" label={t('filterThinking')} />
+          <FilterChip active={filters.tools} onToggle={() => toggleFilter('tools')} icon="🔧" label={t('filterTools')} />
+          <span className="w-px h-3 bg-gray-700/40 dark:bg-gray-700/40 mx-0.5 flex-shrink-0" />
+          <FilterChip active={filters.userMessages} onToggle={() => toggleFilter('userMessages')} icon="👤" label={t('filterUser')} />
+          <FilterChip active={filters.assistantMessages} onToggle={() => toggleFilter('assistantMessages')} icon="🤖" label={t('filterClaude')} />
         </div>
         <CopyButton text={exportToMarkdown(data, t('msgUser'))} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
@@ -165,13 +237,19 @@ export default function ConversationView({ projectId, sessionId }: ConversationV
       <StatsBar session={data.session} totalMessages={visibleMessages.length} />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
         {visibleMessages.map((msg, idx) => (
-          <MessageBubble
+          <div
             key={msg.uuid || idx}
-            message={msg}
-            nextMessage={visibleMessages[idx + 1]}
-          />
+            data-message-id={msg.uuid}
+            className={highlightedId === msg.uuid ? 'rounded-xl ring-2 ring-blue-500/60 ring-offset-2 ring-offset-gray-950 transition-all duration-300' : ''}
+          >
+            <MessageBubble
+              message={msg}
+              nextMessage={visibleMessages[idx + 1]}
+              filters={filters}
+            />
+          </div>
         ))}
         <div ref={bottomRef} />
       </div>
