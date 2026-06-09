@@ -203,6 +203,46 @@ function SlashCommandChip({ name, args }: { name: string; args: string }) {
   );
 }
 
+// Parse local command output blocks injected by Claude Code when user runs shell commands.
+// Tags: <local-command-caveat>, <local-command-stdout>, <local-command-stderr>
+interface LocalCmdOutput { caveat?: string; stdout?: string; stderr?: string }
+function parseLocalCmd(text: string): LocalCmdOutput | null {
+  const has = (tag: string) => text.includes(`<${tag}>`);
+  if (!has('local-command-stdout') && !has('local-command-stderr') && !has('local-command-caveat')) return null;
+  const extract = (tag: string) => text.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`))?.[1]?.trim();
+  return { caveat: extract('local-command-caveat'), stdout: extract('local-command-stdout'), stderr: extract('local-command-stderr') };
+}
+
+function LocalCmdBlock({ caveat, stdout, stderr }: LocalCmdOutput) {
+  const [showCaveat, setShowCaveat] = useState(false);
+  return (
+    <div className="my-2 rounded-lg border border-gray-700/40 overflow-hidden text-xs">
+      {caveat && (
+        <button
+          onClick={() => setShowCaveat(v => !v)}
+          className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/60 text-gray-500 hover:text-gray-400 transition-colors text-left"
+        >
+          <svg className={`w-3 h-3 transition-transform flex-shrink-0 ${showCaveat ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="italic">local command output</span>
+        </button>
+      )}
+      {caveat && showCaveat && (
+        <div className="px-3 py-1.5 bg-yellow-950/20 border-t border-gray-700/30 text-yellow-600/70 italic">{caveat}</div>
+      )}
+      {stdout && (
+        <div className={`px-3 py-2 bg-gray-950/70 font-mono text-gray-300 whitespace-pre-wrap break-words${caveat ? ' border-t border-gray-700/30' : ''}`}>
+          {stdout}
+        </div>
+      )}
+      {stderr && (
+        <div className="px-3 py-2 bg-red-950/30 border-t border-gray-700/30 font-mono text-red-400 whitespace-pre-wrap break-words">{stderr}</div>
+      )}
+    </div>
+  );
+}
+
 function TextContent({ text, isUser }: { text: string; isUser?: boolean }) {
   return (
     <div className={`prose prose-sm max-w-none
@@ -229,6 +269,8 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
       if (!block.text.trim()) return null;
       const cmd = parseSlashCommand(block.text);
       if (cmd) return <SlashCommandChip key={idx} name={cmd.name} args={cmd.args} />;
+      const lcmd = parseLocalCmd(block.text);
+      if (lcmd) return <LocalCmdBlock key={idx} {...lcmd} />;
       return <TextContent key={idx} text={block.text} isUser={isUser} />;
     }
     case 'thinking':
@@ -293,8 +335,12 @@ export default function MessageBubble({ message, nextMessage, filters }: Message
     <div className={`group flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-[#CC785C] flex items-center justify-center flex-shrink-0 mt-0.5">
-          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13.5 3.5h-3L4 20.5h3.5l1.5-4h7l1.5 4H21L13.5 3.5zm-3.8 10.2L12 7.2l2.3 6.5H9.7z" fill="white"/>
+          {/* Anthropic Claude brand mark — starburst / asterisk */}
+          <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12)" />
+            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(45)" />
+            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(90)" />
+            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(135)" />
           </svg>
         </div>
       )}
