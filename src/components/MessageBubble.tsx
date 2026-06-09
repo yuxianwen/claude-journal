@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message, ContentBlock, TokenUsage } from '@/types';
@@ -130,7 +130,39 @@ function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string;
   );
 }
 
+function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-800/80 hover:bg-gray-700 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+        title="关闭 (Esc)"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <img
+        src={src}
+        alt=""
+        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      />
+    </div>
+  );
+}
+
 function ImageBlock({ block, isUser }: { block: ContentBlock & { type: 'image' }; isUser?: boolean }) {
+  const [lightbox, setLightbox] = useState(false);
   const { source } = block;
   const src = source.type === 'base64' && source.data && source.media_type
     ? `data:${source.media_type};base64,${source.data}`
@@ -141,9 +173,11 @@ function ImageBlock({ block, isUser }: { block: ContentBlock & { type: 'image' }
       <img
         src={src}
         alt=""
-        className={`max-w-full max-h-96 rounded-lg object-contain ${isUser ? 'ml-auto' : ''}`}
+        onClick={() => setLightbox(true)}
+        className={`max-w-full max-h-96 rounded-lg object-contain cursor-zoom-in ${isUser ? 'ml-auto' : ''}`}
         loading="lazy"
       />
+      {lightbox && <ImageLightbox src={src} onClose={() => setLightbox(false)} />}
     </div>
   );
 }

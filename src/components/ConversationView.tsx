@@ -161,7 +161,6 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
   const [showBackToTop, setShowBackToTop] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollKey = `claude-journal-scroll:${projectId}/${sessionId}`;
 
   const toggleFilter = useCallback((key: keyof MessageFilters) => {
     setFilters(f => ({ ...f, [key]: !f[key] }));
@@ -184,16 +183,13 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
       });
   }, [projectId, sessionId, getSessionData, t]);
 
-  // Restore scroll position after data renders (skip if we have a highlight target).
-  // URL scroll param takes priority, but only when URL p/s match this session.
+  // Restore scroll position from URL ?scroll= after data renders (skip if highlight target present).
+  // Only honoured when URL p/s match this session — prevents stale params from a previous session.
   useEffect(() => {
     if (!data || highlightMessageId) return;
-    let saved = 0;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('p') === projectId && params.get('s') === sessionId) {
-      saved = parseInt(params.get('scroll') || '0', 10);
-    }
-    if (!saved) saved = parseInt(localStorage.getItem(scrollKey) || '0', 10);
+    if (params.get('p') !== projectId || params.get('s') !== sessionId) return;
+    const saved = parseInt(params.get('scroll') || '0', 10);
     if (saved <= 0) return;
     requestAnimationFrame(() => {
       if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = saved;
@@ -201,7 +197,7 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  // Save scroll position (debounced) to localStorage + URL; control back-to-top visibility
+  // Update URL ?scroll= (debounced) + control back-to-top visibility
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !data) return;
@@ -211,7 +207,6 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
       setShowBackToTop(top > 400);
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => {
-        localStorage.setItem(scrollKey, String(top));
         const url = new URL(window.location.href);
         if (top > 0) { url.searchParams.set('scroll', String(Math.round(top))); }
         else { url.searchParams.delete('scroll'); }
@@ -220,7 +215,7 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
     };
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(saveTimer); };
-  }, [data, scrollKey]);
+  }, [data]);
 
   useEffect(() => {
     if (!data || !highlightMessageId) return;
