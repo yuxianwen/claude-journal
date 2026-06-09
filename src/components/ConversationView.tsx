@@ -184,10 +184,16 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
       });
   }, [projectId, sessionId, getSessionData, t]);
 
-  // Restore scroll position after data renders (skip if we have a highlight target)
+  // Restore scroll position after data renders (skip if we have a highlight target).
+  // URL scroll param takes priority, but only when URL p/s match this session.
   useEffect(() => {
     if (!data || highlightMessageId) return;
-    const saved = parseInt(localStorage.getItem(scrollKey) || '0', 10);
+    let saved = 0;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('p') === projectId && params.get('s') === sessionId) {
+      saved = parseInt(params.get('scroll') || '0', 10);
+    }
+    if (!saved) saved = parseInt(localStorage.getItem(scrollKey) || '0', 10);
     if (saved <= 0) return;
     requestAnimationFrame(() => {
       if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = saved;
@@ -195,7 +201,7 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  // Save scroll position (debounced) + control back-to-top visibility
+  // Save scroll position (debounced) to localStorage + URL; control back-to-top visibility
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !data) return;
@@ -204,7 +210,13 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
       const top = container.scrollTop;
       setShowBackToTop(top > 400);
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => localStorage.setItem(scrollKey, String(top)), 150);
+      saveTimer = setTimeout(() => {
+        localStorage.setItem(scrollKey, String(top));
+        const url = new URL(window.location.href);
+        if (top > 0) { url.searchParams.set('scroll', String(Math.round(top))); }
+        else { url.searchParams.delete('scroll'); }
+        window.history.replaceState(null, '', url.toString());
+      }, 150);
     };
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(saveTimer); };

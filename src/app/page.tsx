@@ -68,23 +68,32 @@ export default function Home() {
   const { t } = useI18n();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    try { return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.projectId ?? null; }
-    catch { return null; }
+    try {
+      const p = new URLSearchParams(window.location.search).get('p');
+      if (p) return p;
+      return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.projectId ?? null;
+    } catch { return null; }
   });
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    try { return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.sessionId ?? null; }
-    catch { return null; }
+    try {
+      const s = new URLSearchParams(window.location.search).get('s');
+      if (s) return s;
+      return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.sessionId ?? null;
+    } catch { return null; }
   });
   const [highlightMessageId, setHighlightMessageId] = useState<string | undefined>(undefined);
   const [showSearch, setShowSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Persist selected session
+  // Persist selected session to URL + localStorage
   useEffect(() => {
-    if (selectedProjectId && selectedSessionId) {
-      localStorage.setItem('claude-journal-selected', JSON.stringify({ projectId: selectedProjectId, sessionId: selectedSessionId }));
-    }
+    if (!selectedProjectId || !selectedSessionId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('p', selectedProjectId);
+    url.searchParams.set('s', selectedSessionId);
+    window.history.replaceState(null, '', url.toString());
+    localStorage.setItem('claude-journal-selected', JSON.stringify({ projectId: selectedProjectId, sessionId: selectedSessionId }));
   }, [selectedProjectId, selectedSessionId]);
 
   // Fall back to first session if saved selection no longer exists
