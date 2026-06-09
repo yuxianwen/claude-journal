@@ -18,6 +18,8 @@ function messageToMarkdown(message: Message, userLabel: string): string {
       lines.push(`> 思考: ${block.thinking}`);
     } else if (block.type === 'tool_use') {
       lines.push(`\`\`\`\n[${block.name}] ${JSON.stringify(block.input)}\n\`\`\``);
+    } else if (block.type === 'image') {
+      lines.push('[图片]');
     }
   }
   return lines.join('\n');
@@ -128,6 +130,24 @@ function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string;
   );
 }
 
+function ImageBlock({ block, isUser }: { block: ContentBlock & { type: 'image' }; isUser?: boolean }) {
+  const { source } = block;
+  const src = source.type === 'base64' && source.data && source.media_type
+    ? `data:${source.media_type};base64,${source.data}`
+    : source.url || '';
+  if (!src) return null;
+  return (
+    <div className="my-2">
+      <img
+        src={src}
+        alt=""
+        className={`max-w-full max-h-96 rounded-lg object-contain ${isUser ? 'ml-auto' : ''}`}
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
 function TextContent({ text, isUser }: { text: string; isUser?: boolean }) {
   return (
     <div className={`prose prose-sm max-w-none
@@ -164,6 +184,8 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
           result={toolResults.get(block.id)}
         />
       );
+    case 'image':
+      return <ImageBlock key={idx} block={block} isUser={isUser} />;
     case 'tool_result':
       return null;
     default:

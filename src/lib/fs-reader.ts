@@ -175,6 +175,10 @@ export async function getSession(
           tool_use_id: String(c.tool_use_id || ''),
           content: c.content as string | ContentBlock[],
         };
+        if (c.type === 'image') return {
+          type: 'image' as const,
+          source: (c.source as { type: string; url?: string; media_type?: string; data?: string }) || { type: 'base64' },
+        };
         return { type: 'text' as const, text: JSON.stringify(c) };
       });
     }

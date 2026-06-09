@@ -42,12 +42,37 @@ interface ToolCallBlockProps {
   result?: string | ContentBlock[];
 }
 
+function ToolResultContent({ result }: { result: string | ContentBlock[] }) {
+  if (typeof result === 'string') {
+    const text = result.length > 2000 ? result.slice(0, 2000) + '\n... (truncated)' : result;
+    return <pre className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{text}</pre>;
+  }
+  return (
+    <div className="space-y-1">
+      {result.map((block, i) => {
+        if (block.type === 'text') {
+          const text = block.text.length > 2000 ? block.text.slice(0, 2000) + '\n... (truncated)' : block.text;
+          return <pre key={i} className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{text}</pre>;
+        }
+        if (block.type === 'image') {
+          const { source } = block;
+          const src = source.type === 'base64' && source.data && source.media_type
+            ? `data:${source.media_type};base64,${source.data}`
+            : source.url || '';
+          return src ? <img key={i} src={src} alt="" className="max-w-full max-h-64 rounded object-contain" loading="lazy" /> : null;
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
 export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const summary = formatInput(block.input, block.name);
-  const resultText = typeof result === 'string' ? result : result ? JSON.stringify(result) : '';
+  const hasResult = result !== undefined && result !== '' && (!Array.isArray(result) || result.length > 0);
 
   return (
     <div className="my-1.5 rounded-lg border border-gray-700/50 bg-gray-900/60 overflow-hidden text-xs font-mono">
@@ -74,12 +99,10 @@ export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
               {JSON.stringify(block.input, null, 2)}
             </pre>
           </div>
-          {resultText && (
+          {hasResult && (
             <div className="px-3 py-2 border-t border-gray-700/50 bg-gray-950/30">
               <p className="text-gray-500 text-xs mb-1">{t('toolOutput')}</p>
-              <pre className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
-                {resultText.length > 2000 ? resultText.slice(0, 2000) + '\n... (truncated)' : resultText}
-              </pre>
+              <ToolResultContent result={result!} />
             </div>
           )}
         </div>
