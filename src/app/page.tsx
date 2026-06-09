@@ -66,18 +66,37 @@ function FolderPicker() {
 export default function Home() {
   const { projects, loading, hasFolder, isLocal } = useFolderContext();
   const { t } = useI18n();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.projectId ?? null; }
+    catch { return null; }
+  });
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.sessionId ?? null; }
+    catch { return null; }
+  });
   const [highlightMessageId, setHighlightMessageId] = useState<string | undefined>(undefined);
   const [showSearch, setShowSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Persist selected session
   useEffect(() => {
-    if (projects.length > 0 && !selectedSessionId) {
-      setSelectedProjectId(projects[0].id);
-      setSelectedSessionId(projects[0].sessions[0]?.id ?? null);
+    if (selectedProjectId && selectedSessionId) {
+      localStorage.setItem('claude-journal-selected', JSON.stringify({ projectId: selectedProjectId, sessionId: selectedSessionId }));
     }
-  }, [projects, selectedSessionId]);
+  }, [selectedProjectId, selectedSessionId]);
+
+  // Fall back to first session if saved selection no longer exists
+  useEffect(() => {
+    if (projects.length === 0) return;
+    if (selectedProjectId && selectedSessionId) {
+      const project = projects.find(p => p.id === selectedProjectId);
+      if (project?.sessions.some(s => s.id === selectedSessionId)) return;
+    }
+    setSelectedProjectId(projects[0].id);
+    setSelectedSessionId(projects[0].sessions[0]?.id ?? null);
+  }, [projects]);
 
   const handleSelectSession = useCallback((projectId: string, sessionId: string, messageUuid?: string) => {
     setSelectedProjectId(projectId);

@@ -158,8 +158,10 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
   const [error, setError] = useState('');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollKey = `claude-journal-scroll:${projectId}/${sessionId}`;
 
   const toggleFilter = useCallback((key: keyof MessageFilters) => {
     setFilters(f => ({ ...f, [key]: !f[key] }));
@@ -181,6 +183,32 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
         setLoading(false);
       });
   }, [projectId, sessionId, getSessionData, t]);
+
+  // Restore scroll position after data renders (skip if we have a highlight target)
+  useEffect(() => {
+    if (!data || highlightMessageId) return;
+    const saved = parseInt(localStorage.getItem(scrollKey) || '0', 10);
+    if (saved <= 0) return;
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = saved;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  // Save scroll position (debounced) + control back-to-top visibility
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !data) return;
+    let saveTimer: ReturnType<typeof setTimeout>;
+    const handleScroll = () => {
+      const top = container.scrollTop;
+      setShowBackToTop(top > 400);
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => localStorage.setItem(scrollKey, String(top)), 150);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(saveTimer); };
+  }, [data, scrollKey]);
 
   useEffect(() => {
     if (!data || !highlightMessageId) return;
@@ -253,6 +281,19 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
         ))}
         <div ref={bottomRef} />
       </div>
+
+      {/* Back to top */}
+      {showBackToTop && (
+        <button
+          onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="回到顶部"
+          className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-gray-200 shadow-lg flex items-center justify-center transition-all duration-200 z-50"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
