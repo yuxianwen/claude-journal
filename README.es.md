@@ -18,6 +18,15 @@ Aplicación web local para explorar y revisar el historial de conversaciones de 
 - **Exportar a Markdown / Imagen** — Copia cualquier mensaje como Markdown o captura de pantalla con un clic
 - **Selector de tema** — Tema claro, oscuro o del sistema con preferencia persistente
 - **Interfaz en 11 idiomas** — Detecta automáticamente el idioma del navegador; cambia en cualquier momento desde el selector
+- **Imágenes en línea** — Las imágenes incrustadas en mensajes (base64 o URL) se muestran directamente; haz clic para ampliar
+- **Lightbox de imágenes** — Superposición a pantalla completa con desenfoque de fondo; cierra con `Esc` o clic fuera
+- **Visualización de comandos slash** — Los mensajes `/comando` se muestran como chips con estilo en lugar de XML sin procesar
+- **Salida de comandos locales** — Los bloques de salida de shell se muestran en estilo terminal; los avisos detallados son plegables
+- **Barra de filtros persistente** — Los ajustes de filtro (pensamiento, herramientas, mensajes usuario/Claude) se mantienen al cambiar de sesión
+- **Memoria de sesión** — La última sesión visitada se restaura al recargar mediante parámetros URL
+- **URLs compartibles** — Copia la URL para compartir o marcar la sesión y posición de scroll exactas (`?p=&s=&scroll=`)
+- **Volver arriba** — Aparece un botón flotante al bajar mucho; un clic vuelve al principio
+- **PWA** — Instala en tu escritorio o pantalla de inicio; se actualiza silenciosamente al desplegar una nueva versión
 
 ![Interfaz de búsqueda](public/screenshot-search.png)
 
@@ -69,4 +78,4 @@ Cada archivo `.jsonl` corresponde a una sesión de Claude Code y contiene el his
 |-------|--------|
 | `⌘K` | Abrir búsqueda de texto completo |
 | `⌘\` | Mostrar / ocultar barra lateral |
-| `Esc` | Cerrar búsqueda |
+| `Esc` | Cerrar búsqueda / lightbox |

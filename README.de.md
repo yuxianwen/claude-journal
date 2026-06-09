@@ -18,6 +18,15 @@ Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude Code Konversation
 - **Als Markdown / Bild exportieren** — Beliebige Nachricht als Markdown oder Screenshot mit einem Klick kopieren
 - **Theme-Umschalter** — Helles, dunkles oder System-Theme mit gespeicherter Einstellung
 - **11-sprachige Benutzeroberfläche** — Erkennt automatisch die Browser-Sprache; jederzeit über den Sprachauswähler wechselbar
+- **Inline-Bilder** — In Nachrichten eingebettete Bilder (base64 oder URL) werden direkt angezeigt; Klick zum Vergrößern
+- **Bild-Lightbox** — Vollbild-Overlay mit Hintergrundunschärfe; schließen mit `Esc` oder Klick außerhalb
+- **Slash-Befehlsanzeige** — `/Befehl`-Nachrichten werden als stilisierte Chips statt als rohem XML angezeigt
+- **Lokale Befehlsausgabe** — Shell-Ausgabeblöcke werden im Terminal-Stil angezeigt; ausführliche Hinweise sind einklappbar
+- **Dauerhafte Filterleiste** — Filtereinstellungen (Denken, Tools, Nutzer-/Claude-Nachrichten) bleiben beim Sessionwechsel erhalten
+- **Sitzungsgedächtnis** — Die zuletzt besuchte Sitzung wird beim Neuladen über URL-Parameter wiederhergestellt
+- **Teilbare URLs** — URL kopieren, um die genaue Sitzung und Scrollposition zu teilen oder zu speichern (`?p=&s=&scroll=`)
+- **Nach oben** — Ein schwebendes Button erscheint bei tiefem Scrollen; ein Klick springt zurück nach oben
+- **PWA** — Auf Desktop oder Startbildschirm installierbar; automatische stille Updates bei neuen Versionen
 
 ![Suchoberfläche](public/screenshot-search.png)
 
@@ -69,4 +78,4 @@ Jede `.jsonl`-Datei entspricht einer Claude Code Sitzung und enthält den vollst
 |--------|--------|
 | `⌘K` | Volltextsuche öffnen |
 | `⌘\` | Seitenleiste ein-/ausblenden |
-| `Esc` | Suche schließen |
+| `Esc` | Suche / Lightbox schließen |

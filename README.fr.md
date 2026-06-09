@@ -18,6 +18,15 @@ Application web locale pour parcourir et revoir l'historique de vos conversation
 - **Exporter en Markdown / Image** — Copiez n'importe quel message en Markdown ou en capture d'écran en un clic
 - **Sélecteur de thème** — Thème clair, sombre ou système avec préférence persistante
 - **Interface en 11 langues** — Détecte automatiquement la langue du navigateur ; changement à tout moment via le sélecteur
+- **Images en ligne** — Les images intégrées dans les messages (base64 ou URL) s'affichent directement ; cliquez pour agrandir
+- **Visionneuse d'images** — Superposition plein écran avec flou d'arrière-plan ; fermeture par `Esc` ou clic à l'extérieur
+- **Affichage des commandes slash** — Les messages `/commande` s'affichent sous forme de chips stylisés plutôt qu'en XML brut
+- **Sortie des commandes locales** — Les blocs de sortie shell s'affichent en style terminal ; les avertissements détaillés sont réductibles
+- **Barre de filtres persistante** — Les paramètres de filtre (pensée, outils, messages utilisateur/Claude) persistent lors des changements de session
+- **Mémoire de session** — La dernière session consultée est restaurée au rechargement via les paramètres URL
+- **URLs partageables** — Copiez l'URL pour partager ou mémoriser la session et la position de défilement exactes (`?p=&s=&scroll=`)
+- **Retour en haut** — Un bouton flottant apparaît en bas de page ; un clic remonte en haut
+- **PWA** — Installez sur votre bureau ou écran d'accueil ; mises à jour silencieuses automatiques lors d'un nouveau déploiement
 
 ![Interface de recherche](public/screenshot-search.png)
 
@@ -69,4 +78,4 @@ Chaque fichier `.jsonl` correspond à une session Claude Code et contient l'hist
 |-----------|--------|
 | `⌘K` | Ouvrir la recherche plein texte |
 | `⌘\` | Afficher / masquer la barre latérale |
-| `Esc` | Fermer la recherche |
+| `Esc` | Fermer la recherche / le lightbox |

@@ -13,14 +13,22 @@ A PWA for browsing and reviewing your Claude Code conversation history. Runs ent
 - **Project & Session Browser** — All projects grouped by working directory, with full session history in the sidebar
 - **Sidebar Filter** — Type a keyword to instantly filter projects and sessions; match count updates in real time
 - **Conversation Rendering** — Full Markdown rendering, syntax-highlighted code blocks (Shiki), GFM tables & task lists
-- **Tool Call Visualization** — See every tool call Claude made (Bash, file reads/writes, etc.) and its output
+- **Inline Images** — Images embedded in messages (base64 or URL) are rendered inline; click any image to view it full-size
+- **Image Lightbox** — Full-screen overlay with backdrop blur; close with `Esc` or by clicking outside
+- **Tool Call Visualization** — See every tool call Claude made (Bash, file reads/writes, screenshots, etc.) and its output, including inline image results
 - **Thinking Blocks** — Collapsible display of Claude's reasoning process
-- **Token Stats** — Input / output / cache-hit token counts and estimated cost per session
+- **Slash Command Display** — `/command` messages render as styled chips instead of raw XML
+- **Local Command Output** — Shell command output blocks display as terminal-style UI; verbose caveats are collapsible
+- **Token Stats** — Input / output / cache-hit token counts per session
 - **Full-text Search** — `⌘K` to search across all sessions instantly
 - **Export to Markdown / Image** — Copy any message as Markdown or as a screenshot with one click
 - **Theme Switcher** — Light, dark, or system theme with persistent preference
+- **Persistent Filter Bar** — Filter settings (thinking, tools, user/Claude messages) survive session switches
+- **Session Memory** — Last-viewed conversation is restored on refresh via URL parameters
+- **Shareable URLs** — Copy the URL to share or bookmark an exact conversation and scroll position (`?p=&s=&scroll=`)
+- **Back to Top** — Floating button appears when scrolled far down; one click returns to the top
 - **11-language UI** — Auto-detects browser locale; switch at any time via the language picker
-- **PWA** — Install to your desktop or home screen for a native app experience
+- **PWA** — Install to your desktop or home screen; auto-updates silently when a new version is deployed
 
 ![Search UI](public/screenshot-search.png)
 
@@ -76,4 +84,4 @@ Each `.jsonl` file corresponds to one Claude Code session and contains the full 
 |----------|--------|
 | `⌘K` | Open full-text search |
 | `⌘\` | Toggle sidebar |
-| `Esc` | Close search |
+| `Esc` | Close search / lightbox |
