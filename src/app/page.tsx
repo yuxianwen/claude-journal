@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import Sidebar from '@/components/Sidebar';
-import ConversationView from '@/components/ConversationView';
+import ConversationView, { MessageFilters } from '@/components/ConversationView';
 import SearchView from '@/components/SearchView';
 import LangSwitcher from '@/components/LangSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
@@ -117,6 +117,11 @@ export default function Home() {
     setSelectedSessionId(projects[0].sessions[0]?.id ?? null);
   }, [projects]);
 
+  const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
+  const toggleFilter = useCallback((key: keyof MessageFilters) => {
+    setFilters(f => ({ ...f, [key]: !f[key] }));
+  }, []);
+
   const handleSelectSession = useCallback((projectId: string, sessionId: string, messageUuid?: string) => {
     setSelectedProjectId(projectId);
     setSelectedSessionId(sessionId);
@@ -205,6 +210,8 @@ export default function Home() {
             projectId={selectedProjectId}
             sessionId={selectedSessionId}
             highlightMessageId={highlightMessageId}
+            filters={filters}
+            onToggleFilter={toggleFilter}
           />
         ) : loading ? (
           <div className="flex-1 flex items-center justify-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ConversationData, Message } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
@@ -149,22 +149,19 @@ interface ConversationViewProps {
   projectId: string;
   sessionId: string;
   highlightMessageId?: string;
+  filters: MessageFilters;
+  onToggleFilter: (key: keyof MessageFilters) => void;
 }
 
-export default function ConversationView({ projectId, sessionId, highlightMessageId }: ConversationViewProps) {
+export default function ConversationView({ projectId, sessionId, highlightMessageId, filters, onToggleFilter }: ConversationViewProps) {
   const { t } = useI18n();
   const [data, setData] = useState<ConversationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
   const [showBackToTop, setShowBackToTop] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const toggleFilter = useCallback((key: keyof MessageFilters) => {
-    setFilters(f => ({ ...f, [key]: !f[key] }));
-  }, []);
 
   const { getSessionData } = useFolderContext();
 
@@ -259,11 +256,11 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
           <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <FilterChip active={filters.thinking} onToggle={() => toggleFilter('thinking')} icon="💭" label={t('filterThinking')} />
-          <FilterChip active={filters.tools} onToggle={() => toggleFilter('tools')} icon="🔧" label={t('filterTools')} />
+          <FilterChip active={filters.thinking} onToggle={() => onToggleFilter('thinking')} icon="💭" label={t('filterThinking')} />
+          <FilterChip active={filters.tools} onToggle={() => onToggleFilter('tools')} icon="🔧" label={t('filterTools')} />
           <span className="w-px h-3 bg-gray-700/40 dark:bg-gray-700/40 mx-0.5 flex-shrink-0" />
-          <FilterChip active={filters.userMessages} onToggle={() => toggleFilter('userMessages')} icon="👤" label={t('filterUser')} />
-          <FilterChip active={filters.assistantMessages} onToggle={() => toggleFilter('assistantMessages')} icon="🤖" label={t('filterClaude')} />
+          <FilterChip active={filters.userMessages} onToggle={() => onToggleFilter('userMessages')} icon="👤" label={t('filterUser')} />
+          <FilterChip active={filters.assistantMessages} onToggle={() => onToggleFilter('assistantMessages')} icon="🤖" label={t('filterClaude')} />
         </div>
         <CopyButton text={exportToMarkdown(data, t('msgUser'))} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
