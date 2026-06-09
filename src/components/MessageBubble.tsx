@@ -7,6 +7,7 @@ import { Message, ContentBlock, TokenUsage } from '@/types';
 import ToolCallBlock from './ToolCallBlock';
 import { useI18n } from '@/i18n';
 import { MessageFilters } from './ConversationView';
+import ClaudeIcon from './ClaudeIcon';
 
 function messageToMarkdown(message: Message, userLabel: string): string {
   const role = message.type === 'user' ? userLabel : 'Claude';
@@ -334,15 +335,7 @@ export default function MessageBubble({ message, nextMessage, filters }: Message
   return (
     <div className={`group flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-[#CC785C] flex items-center justify-center flex-shrink-0 mt-0.5">
-          {/* Anthropic Claude brand mark — starburst / asterisk */}
-          <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12)" />
-            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(45)" />
-            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(90)" />
-            <rect x="-1.1" y="-10.5" width="2.2" height="21" rx="1.1" transform="translate(12,12) rotate(135)" />
-          </svg>
-        </div>
+        <ClaudeIcon className="w-7 h-7 flex-shrink-0 mt-0.5" />
       )}
 
       <div className={`max-w-[85%] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
