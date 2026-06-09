@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Project, SessionMeta } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
@@ -38,9 +38,17 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
   const { t } = useI18n();
   const [reloading, setReloading] = useState(false);
   const [filter, setFilter] = useState('');
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    new Set(projects.slice(0, 3).map(p => p.id))
-  );
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => {
+    const initial = new Set(projects.slice(0, 3).map(p => p.id));
+    if (selectedProjectId) initial.add(selectedProjectId);
+    return initial;
+  });
+  const selectedItemRef = useRef<HTMLButtonElement>(null);
+
+  // Scroll selected session into view whenever selection changes
+  useEffect(() => {
+    selectedItemRef.current?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+  }, [selectedProjectId, selectedSessionId]);
 
   const handleReload = async () => {
     setReloading(true);
@@ -170,6 +178,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
                   return (
                     <button
                       key={session.id}
+                      ref={isSelected ? selectedItemRef : undefined}
                       onClick={() => onSelectSession(project.id, session.id)}
                       className={`w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-200/70 dark:hover:bg-gray-800/60 transition-colors text-left ${isSelected ? 'bg-blue-950/60 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
                     >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import Sidebar from '@/components/Sidebar';
@@ -85,13 +85,23 @@ export default function Home() {
   const [highlightMessageId, setHighlightMessageId] = useState<string | undefined>(undefined);
   const [showSearch, setShowSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Track previous session to distinguish "initial load" from "actual switch"
+  const prevSessionRef = useRef<{ projectId: string; sessionId: string } | null>(null);
 
-  // Persist selected session to URL + localStorage
+  // Persist selected session to URL + localStorage.
+  // Clear ?scroll only when the session actually changes (not on initial load),
+  // so shared URLs with a scroll param are honoured by ConversationView.
   useEffect(() => {
     if (!selectedProjectId || !selectedSessionId) return;
     const url = new URL(window.location.href);
     url.searchParams.set('p', selectedProjectId);
     url.searchParams.set('s', selectedSessionId);
+    const switched = prevSessionRef.current !== null && (
+      prevSessionRef.current.projectId !== selectedProjectId ||
+      prevSessionRef.current.sessionId !== selectedSessionId
+    );
+    if (switched) url.searchParams.delete('scroll');
+    prevSessionRef.current = { projectId: selectedProjectId, sessionId: selectedSessionId };
     window.history.replaceState(null, '', url.toString());
     localStorage.setItem('claude-journal-selected', JSON.stringify({ projectId: selectedProjectId, sessionId: selectedSessionId }));
   }, [selectedProjectId, selectedSessionId]);
@@ -189,13 +199,17 @@ export default function Home() {
 
         {showPicker ? (
           <FolderPicker />
-        ) : selectedProjectId && selectedSessionId ? (
+        ) : selectedProjectId && selectedSessionId && !loading ? (
           <ConversationView
             key={`${selectedProjectId}/${selectedSessionId}`}
             projectId={selectedProjectId}
             sessionId={selectedSessionId}
             highlightMessageId={highlightMessageId}
           />
+        ) : loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-gray-500 text-sm animate-pulse">{t('convLoading')}</div>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
