@@ -48,6 +48,10 @@ function parseSessionFile(filePath: string): SessionMeta {
       title = line.customTitle || '';
     }
 
+    if (line.type === 'ai-title' && !title) {
+      title = line.aiTitle || '';
+    }
+
     if (line.type === 'user') {
       if (!cwd && line.cwd) cwd = line.cwd;
       if (!startTime && line.timestamp) startTime = line.timestamp;

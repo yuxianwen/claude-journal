@@ -7,16 +7,48 @@ import { useI18n } from '@/i18n';
 import LangSwitcher from './LangSwitcher';
 import ThemeSwitcher from './ThemeSwitcher';
 
-function formatDate(iso: string) {
+const YESTERDAY: Record<string, string> = {
+  'zh-CN': '昨天', ja: '昨日', ko: '어제',
+  ru: 'Вчера', ar: 'أمس', hi: 'कल',
+  es: 'Ayer', fr: 'Hier', de: 'Gestern', pt: 'Ontem',
+};
+
+function formatDate(iso: string, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (days === 1) return d.toLocaleDateString([], { weekday: 'short' });
-  if (days < 7) return d.toLocaleDateString([], { weekday: 'short' });
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today.getTime() - msgDay.getTime()) / 86400000);
+
+  const isCJK = locale === 'zh-CN' || locale === 'ja' || locale === 'ko';
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const y = d.getFullYear();
+
+  if (diffDays === 0) {
+    return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: !isCJK });
+  }
+
+  if (diffDays === 1) {
+    return YESTERDAY[locale] ?? 'Yesterday';
+  }
+
+  if (diffDays < 7) {
+    return d.toLocaleDateString(locale, { weekday: 'short' });
+  }
+
+  const sameYear = y === now.getFullYear();
+  if (locale === 'zh-CN' || locale === 'ja') {
+    return sameYear ? `${m}月${day}日` : `${y}年${m}月${day}日`;
+  }
+  if (locale === 'ko') {
+    return sameYear ? `${m}월 ${day}일` : `${y}년 ${m}월 ${day}일`;
+  }
+  return sameYear
+    ? d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+    : d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatTokens(n: number) {
@@ -35,7 +67,7 @@ interface SidebarProps {
 
 export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession, onToggle }: SidebarProps) {
   const { changeFolder, reload } = useFolderContext();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [reloading, setReloading] = useState(false);
   const [filter, setFilter] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => {
@@ -187,7 +219,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
                           {session.title || session.id.slice(0, 8)}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-gray-600">{formatDate(session.endTime)}</span>
+                          <span className="text-xs text-gray-600">{formatDate(session.endTime, locale)}</span>
                           {session.tokenUsage.outputTokens > 0 && (
                             <span className="text-xs text-gray-700">
                               {formatTokens(session.tokenUsage.outputTokens + session.tokenUsage.inputTokens)}t
