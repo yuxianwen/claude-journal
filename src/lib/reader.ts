@@ -25,6 +25,27 @@ function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
   };
 }
 
+// Cache parsed session metadata keyed by file path, invalidated by mtime.
+// Lets repeated getAllProjects() calls (polling) re-parse only changed files.
+const metaCache = new Map<string, { mtimeMs: number; meta: SessionMeta }>();
+
+function getSessionMetaCached(filePath: string, mtimeMs: number): SessionMeta {
+  const hit = metaCache.get(filePath);
+  if (hit && hit.mtimeMs === mtimeMs) return hit.meta;
+  const meta = parseSessionFile(filePath);
+  metaCache.set(filePath, { mtimeMs, meta });
+  return meta;
+}
+
+export function getSessionMtime(projectId: string, sessionId: string): number | null {
+  const filePath = path.join(PROJECTS_DIR, projectId, `${sessionId}.jsonl`);
+  try {
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
 function parseSessionFile(filePath: string): SessionMeta {
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = content.split('\n').filter(Boolean).map(line => {
@@ -133,9 +154,10 @@ export function getAllProjects(): Project[] {
 
     if (sessionFiles.length === 0) continue;
 
-    const sessions: SessionMeta[] = sessionFiles.map(f =>
-      parseSessionFile(path.join(dirPath, f))
-    ).sort((a, b) => b.endTime.localeCompare(a.endTime));
+    const sessions: SessionMeta[] = sessionFiles.map(f => {
+      const fp = path.join(dirPath, f);
+      return getSessionMetaCached(fp, fs.statSync(fp).mtimeMs);
+    }).sort((a, b) => b.endTime.localeCompare(a.endTime));
 
     const cwd = sessions[0]?.cwd || dirName.replace(/^-/, '/').replace(/-/g, '/');
     const name = cwd ? path.basename(cwd) : dirName;
@@ -159,6 +181,7 @@ export function getSession(projectId: string, sessionId: string): ConversationDa
   const filePath = path.join(PROJECTS_DIR, projectId, `${sessionId}.jsonl`);
   if (!fs.existsSync(filePath)) return null;
 
+  const mtimeMs = fs.statSync(filePath).mtimeMs;
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = content.split('\n').filter(Boolean).map(line => {
     try { return JSON.parse(line); } catch { return null; }
@@ -220,7 +243,7 @@ export function getSession(projectId: string, sessionId: string): ConversationDa
     });
   }
 
-  return { session: sessionMeta, messages };
+  return { session: sessionMeta, messages, mtimeMs };
 }
 
 function extractMessageText(line: Record<string, unknown>): string {

@@ -90,6 +90,25 @@ function parseSessionMeta(projectId: string, sessionId: string, content: string)
   return { id: sessionId, projectId, title, startTime, endTime, messageCount, toolCallCount, tokenUsage, cwd, model };
 }
 
+// Cache parsed session metadata keyed by "<dir>/<file>", invalidated by the
+// File's lastModified. getFile() is cheap; reading + parsing text() is not, so
+// this lets polling getAllProjects() skip unchanged files.
+const metaCache = new Map<string, { mtimeMs: number; meta: SessionMeta }>();
+
+async function getSessionMetaCached(
+  dirName: string,
+  fileName: string,
+  sessionId: string,
+  file: File,
+): Promise<SessionMeta> {
+  const key = `${dirName}/${fileName}`;
+  const hit = metaCache.get(key);
+  if (hit && hit.mtimeMs === file.lastModified) return hit.meta;
+  const meta = parseSessionMeta(dirName, sessionId, await file.text());
+  metaCache.set(key, { mtimeMs: file.lastModified, meta });
+  return meta;
+}
+
 export async function getAllProjects(dirHandle: FileSystemDirectoryHandle): Promise<Project[]> {
   const projects: Project[] = [];
 
@@ -102,9 +121,8 @@ export async function getAllProjects(dirHandle: FileSystemDirectoryHandle): Prom
       if (fileHandle.kind !== 'file' || !fileName.endsWith('.jsonl')) continue;
 
       const file = await (fileHandle as FileSystemFileHandle).getFile();
-      const content = await file.text();
       const sessionId = fileName.replace(/\.jsonl$/, '');
-      sessions.push(parseSessionMeta(dirName, sessionId, content));
+      sessions.push(await getSessionMetaCached(dirName, fileName, sessionId, file));
     }
 
     if (sessions.length === 0) continue;
@@ -128,8 +146,9 @@ export async function getAllProjects(dirHandle: FileSystemDirectoryHandle): Prom
 export async function getSession(
   dirHandle: FileSystemDirectoryHandle,
   projectId: string,
-  sessionId: string
-): Promise<ConversationData | null> {
+  sessionId: string,
+  since?: number,
+): Promise<ConversationData | { unchanged: true } | null> {
   let projectHandle: FileSystemDirectoryHandle;
   try {
     projectHandle = await dirHandle.getDirectoryHandle(projectId);
@@ -145,6 +164,9 @@ export async function getSession(
   }
 
   const file = await fileHandle.getFile();
+  const mtimeMs = file.lastModified;
+  if (since != null && mtimeMs <= since) return { unchanged: true };
+
   const content = await file.text();
   const lines = parseLines(content);
 
@@ -202,7 +224,7 @@ export async function getSession(
     });
   }
 
-  return { session: sessionMeta, messages };
+  return { session: sessionMeta, messages, mtimeMs };
 }
 
 function extractMessageText(line: Record<string, unknown>): string {

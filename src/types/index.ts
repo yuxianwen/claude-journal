@@ -48,4 +48,6 @@ export interface Message {
 export interface ConversationData {
   session: SessionMeta;
   messages: Message[];
+  /** File modification time (ms). Used by clients for conditional polling. */
+  mtimeMs?: number;
 }

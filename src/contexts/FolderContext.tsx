@@ -20,11 +20,17 @@ interface FolderContextType {
   pickFolder: () => Promise<void>;
   changeFolder: () => Promise<void>;
   reload: () => Promise<void>;
-  getSessionData: (projectId: string, sessionId: string) => Promise<ConversationData | null>;
+  getSessionData: (projectId: string, sessionId: string, since?: number) => Promise<ConversationData | { unchanged: true } | null>;
   search: (query: string) => Promise<SearchResult[]>;
 }
 
 const FolderContext = createContext<FolderContextType | null>(null);
+
+// Fingerprint of the project list's render-relevant state, so periodic polling
+// can skip the setState (and sidebar re-render) when nothing actually changed.
+function projectsSig(ps: Project[]): string {
+  return ps.map(p => `${p.id}:${p.sessions.map(s => `${s.id}@${s.endTime}#${s.messageCount}`).join(',')}`).join('|');
+}
 
 export function useFolderContext() {
   const ctx = useContext(FolderContext);
@@ -40,6 +46,16 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   const [hasFolder, setHasFolder] = useState(false);
   const [isLocal] = useState(isLocalEnv);
 
+  // Skip a state update when a refresh produced an identical project list, so
+  // periodic polling doesn't trigger needless sidebar re-renders.
+  const projectsSigRef = useRef('');
+  const applyProjects = useCallback((next: Project[]) => {
+    const sig = projectsSig(next);
+    if (sig === projectsSigRef.current) return;
+    projectsSigRef.current = sig;
+    setProjects(next);
+  }, []);
+
   // ── Local dev: load via API routes ─────────────────────────────────────────
 
   const loadFromApi = useCallback(async () => {
@@ -49,14 +65,14 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/projects');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setProjects(data);
+      applyProjects(data);
       setHasFolder(true);
     } catch (e) {
       setError(String(e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyProjects]);
 
   // ── Remote: load via File System Access API ────────────────────────────────
 
@@ -65,14 +81,31 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     setError('');
     try {
       const data = await getAllProjects(handle);
-      setProjects(data);
+      applyProjects(data);
       setHasFolder(true);
     } catch (e) {
       setError(String(e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyProjects]);
+
+  // ── Silent refresh (polling): update the project list without the loading
+  //    flicker, and skip entirely while the tab is hidden. ──────────────────
+  const refreshProjects = useCallback(async () => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+    try {
+      if (isLocal) {
+        const res = await fetch('/api/projects');
+        if (!res.ok) return;
+        applyProjects(await res.json());
+      } else if (handleRef.current) {
+        applyProjects(await getAllProjects(handleRef.current));
+      }
+    } catch {
+      // transient read error; next tick retries
+    }
+  }, [isLocal, applyProjects]);
 
   // ── Init ───────────────────────────────────────────────────────────────────
 
@@ -125,6 +158,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     if (isLocal) return;
     await clearHandle();
     handleRef.current = null;
+    projectsSigRef.current = '';
     setProjects([]);
     setHasFolder(false);
     await pickFolder();
@@ -138,16 +172,30 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isLocal, loadFromApi, loadFromHandle]);
 
+  // ── Auto-refresh the project list while a folder is open ────────────────────
+  useEffect(() => {
+    if (!hasFolder) return;
+    const id = setInterval(refreshProjects, 10_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshProjects(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [hasFolder, refreshProjects]);
+
   // ── Data access ────────────────────────────────────────────────────────────
 
-  const getSessionData = useCallback(async (projectId: string, sessionId: string) => {
+  const getSessionData = useCallback(async (projectId: string, sessionId: string, since?: number) => {
     if (isLocal) {
-      const res = await fetch(`/api/sessions?projectId=${encodeURIComponent(projectId)}&sessionId=${encodeURIComponent(sessionId)}`);
+      const params = new URLSearchParams({ projectId, sessionId });
+      if (since != null) params.set('since', String(since));
+      const res = await fetch(`/api/sessions?${params.toString()}`);
       if (!res.ok) return null;
       return res.json();
     }
     if (!handleRef.current) return null;
-    return getSession(handleRef.current, projectId, sessionId);
+    return getSession(handleRef.current, projectId, sessionId, since);
   }, [isLocal]);
 
   const search = useCallback(async (query: string) => {

@@ -153,6 +153,13 @@ interface ConversationViewProps {
   onToggleFilter: (key: keyof MessageFilters) => void;
 }
 
+// Cheap fingerprint of a conversation's render-relevant state — lets polling
+// skip setState (and the re-render) when nothing actually changed.
+function convSig(d: ConversationData): string {
+  const last = d.messages[d.messages.length - 1];
+  return `${d.messages.length}:${last?.uuid ?? ''}:${d.session.endTime}:${d.session.title}`;
+}
+
 export default function ConversationView({ projectId, sessionId, highlightMessageId, filters, onToggleFilter }: ConversationViewProps) {
   const { t } = useI18n();
   const [data, setData] = useState<ConversationData | null>(null);
@@ -163,27 +170,80 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Polling state: track the file mtime + a content fingerprint so refreshes
+  // are conditional, and remember whether to follow the conversation tail.
+  const lastMtimeRef = useRef<number | undefined>(undefined);
+  const dataSigRef = useRef('');
+  const loadingRef = useRef(true);
+  const didRestoreRef = useRef(false);
+  const followBottomRef = useRef(false);
+
   const { getSessionData } = useFolderContext();
 
+  // Initial load (and full reload on session switch).
   useEffect(() => {
     setLoading(true);
+    loadingRef.current = true;
     setError('');
+    lastMtimeRef.current = undefined;
+    dataSigRef.current = '';
+    didRestoreRef.current = false;
     getSessionData(projectId, sessionId)
       .then(d => {
-        if (!d) { setError(t('convNotFound')); setLoading(false); return; }
+        if (!d || 'unchanged' in d) { setError(t('convNotFound')); setLoading(false); loadingRef.current = false; return; }
         setData(d);
+        dataSigRef.current = convSig(d);
+        lastMtimeRef.current = d.mtimeMs;
         setLoading(false);
+        loadingRef.current = false;
       })
       .catch(e => {
         setError(String(e));
         setLoading(false);
+        loadingRef.current = false;
       });
   }, [projectId, sessionId, getSessionData, t]);
+
+  // Auto-refresh the open conversation. The keyed message list means only new
+  // bubbles mount — existing DOM is untouched (true partial refresh).
+  useEffect(() => {
+    const tick = async () => {
+      if (loadingRef.current) return;
+      if (document.visibilityState !== 'visible') return;
+      const res = await getSessionData(projectId, sessionId, lastMtimeRef.current);
+      if (!res || 'unchanged' in res) return;
+      lastMtimeRef.current = res.mtimeMs ?? lastMtimeRef.current;
+      const sig = convSig(res);
+      if (sig === dataSigRef.current) return; // mtime moved but content identical
+      dataSigRef.current = sig;
+      // If the user is parked at the bottom, follow new messages like `tail -f`.
+      const el = scrollContainerRef.current;
+      followBottomRef.current = !!el && el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+      setData(res);
+    };
+    const id = setInterval(tick, 3000);
+    const onVisible = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [projectId, sessionId, getSessionData]);
+
+  // After a tail-follow update lands, pin the scroll to the new bottom.
+  useEffect(() => {
+    if (!followBottomRef.current) return;
+    followBottomRef.current = false;
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [data]);
 
   // Restore scroll position from URL ?scroll= after data renders (skip if highlight target present).
   // Only honoured when URL p/s match this session — prevents stale params from a previous session.
   useEffect(() => {
     if (!data || highlightMessageId) return;
+    if (didRestoreRef.current) return; // only restore on initial load, not on poll updates
+    didRestoreRef.current = true;
     const params = new URLSearchParams(window.location.search);
     if (params.get('p') !== projectId || params.get('s') !== sessionId) return;
     const saved = parseInt(params.get('scroll') || '0', 10);
