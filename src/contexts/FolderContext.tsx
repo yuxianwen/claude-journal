@@ -93,11 +93,11 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
 
   // ── Remote: load via File System Access API ────────────────────────────────
 
-  const loadFromHandle = useCallback(async (handle: FileSystemDirectoryHandle) => {
+  const loadFromHandle = useCallback(async (handle: FileSystemDirectoryHandle, targetProvider: Provider = provider) => {
     setLoading(true);
     setError('');
     try {
-      const data = provider === 'codex'
+      const data = targetProvider === 'codex'
         ? await getCodexAllProjects(handle)
         : await getAllProjects(handle);
       applyProjects(data);
@@ -108,6 +108,41 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, [applyProjects, provider]);
+
+  const resetProjectState = useCallback(() => {
+    projectsSigRef.current = '';
+    setProjects([]);
+    setHasFolder(false);
+    handleRef.current = null;
+  }, []);
+
+  const loadSavedRemoteHandle = useCallback(async (targetProvider: Provider) => {
+    const saved = await loadHandle(targetProvider);
+    if (!saved) {
+      setLoading(false);
+      return false;
+    }
+
+    try {
+      const perm = await saved.queryPermission({ mode: 'read' });
+      if (perm === 'granted') {
+        handleRef.current = saved;
+        await loadFromHandle(saved, targetProvider);
+        return true;
+      }
+      const req = await saved.requestPermission({ mode: 'read' });
+      if (req === 'granted') {
+        handleRef.current = saved;
+        await loadFromHandle(saved, targetProvider);
+        return true;
+      }
+    } catch {
+      // no user gesture available, fall through to show picker
+    }
+
+    setLoading(false);
+    return false;
+  }, [loadFromHandle]);
 
   // ── Silent refresh (polling): update the project list without the loading
   //    flicker, and skip entirely while the tab is hidden. ──────────────────
@@ -137,42 +172,21 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function initRemote() {
-      const saved = await loadHandle();
-      if (!saved) { setLoading(false); return; }
-
-      try {
-        const perm = await saved.queryPermission({ mode: 'read' });
-        if (perm === 'granted') {
-          handleRef.current = saved;
-          await loadFromHandle(saved);
-          return;
-        }
-        const req = await saved.requestPermission({ mode: 'read' });
-        if (req === 'granted') {
-          handleRef.current = saved;
-          await loadFromHandle(saved);
-          return;
-        }
-      } catch {
-        // no user gesture available, fall through to show picker
-      }
-      setLoading(false);
+      await loadSavedRemoteHandle(provider);
     }
     initRemote();
-  }, [isLocal, loadFromApi, loadFromHandle]);
+  }, [isLocal, loadFromApi, loadSavedRemoteHandle, provider]);
 
   const setProvider = useCallback((next: Provider) => {
     if (next === provider) return;
     localStorage.setItem('claude-journal-provider', next);
-    projectsSigRef.current = '';
-    setProjects([]);
-    setHasFolder(false);
-    if (!isLocal) {
-      handleRef.current = null;
-      void clearHandle();
-    }
+    resetProjectState();
     setProviderState(next);
-  }, [isLocal, provider]);
+    if (!isLocal) {
+      setLoading(true);
+      void loadSavedRemoteHandle(next);
+    }
+  }, [isLocal, loadSavedRemoteHandle, provider, resetProjectState]);
 
   // ── Folder picker (remote only) ────────────────────────────────────────────
 
@@ -181,22 +195,19 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     try {
       const handle = await window.showDirectoryPicker({ mode: 'read' });
       handleRef.current = handle;
-      await saveHandle(handle);
+      await saveHandle(handle, provider);
       await loadFromHandle(handle);
     } catch (e) {
       if ((e as Error).name !== 'AbortError') setError(String(e));
     }
-  }, [isLocal, loadFromHandle]);
+  }, [isLocal, loadFromHandle, provider]);
 
   const changeFolder = useCallback(async () => {
     if (isLocal) return;
-    await clearHandle();
-    handleRef.current = null;
-    projectsSigRef.current = '';
-    setProjects([]);
-    setHasFolder(false);
+    await clearHandle(provider);
+    resetProjectState();
     await pickFolder();
-  }, [isLocal, pickFolder]);
+  }, [isLocal, pickFolder, provider, resetProjectState]);
 
   const reload = useCallback(async () => {
     if (isLocal) {
