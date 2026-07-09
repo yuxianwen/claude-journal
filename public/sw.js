@@ -1,6 +1,6 @@
 // Cache name is stamped with a build version at deploy time (scripts/stamp-sw.js).
 // Changing the name on each deploy ensures browsers detect a new SW and bust stale caches.
-const CACHE = 'claude-journal-1781012923538';
+const CACHE = 'claude-journal-1783568607500';
 
 const PRECACHE = [
   '/',
@@ -28,25 +28,15 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Cache-first for immutable hashed assets (safe: URL changes when content changes)
-  if (url.pathname.startsWith('/_next/static/')) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        });
-      })
-    );
+  // Never cache Next.js chunks, RSC payloads, or API responses. Serving stale
+  // chunks can break Turbopack module factories after deploys.
+  if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network-first for HTML and other resources: always try to get the latest,
-  // fall back to cache only when offline.
+  // Network-first for public assets: always try to get the latest, fall back to
+  // cache only when offline.
   event.respondWith(
     fetch(event.request)
       .then(response => {

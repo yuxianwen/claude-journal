@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-Application web locale pour parcourir et revoir l'historique de vos conversations Claude Code. Lit directement les fichiers JSONL depuis `~/.claude/projects/` — aucune configuration requise.
+Application web locale pour parcourir et revoir l'historique de vos conversations Claude Code et Codex. Lit directement les fichiers JSONL depuis `~/.claude/projects/` ou `~/.codex/sessions/`.
 
 **Langue :** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | Français | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
@@ -61,16 +61,27 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour parcourir toutes vos 
 
 ## Source des données
 
-L'application ne lit que des fichiers locaux — aucune requête réseau, aucune donnée envoyée. Chemin des données de session :
+Toutes les données restent sur votre machine. L’application utilise la File System Access API du navigateur pour lire directement les fichiers de session ; rien n’est téléversé.
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-Chaque fichier `.jsonl` correspond à une session Claude Code et contient l'historique complet des messages ainsi que l'utilisation des tokens.
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+Chaque fichier `.jsonl` correspond à une session et contient l’historique des messages ainsi que l’usage des tokens disponible.
 
 ## Raccourcis clavier
 

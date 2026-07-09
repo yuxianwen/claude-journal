@@ -9,8 +9,8 @@ import { useI18n } from '@/i18n';
 import { MessageFilters } from './ConversationView';
 import ClaudeIcon from './ClaudeIcon';
 
-function messageToMarkdown(message: Message, userLabel: string): string {
-  const role = message.type === 'user' ? userLabel : 'Claude';
+function messageToMarkdown(message: Message, userLabel: string, assistantName: string): string {
+  const role = message.type === 'user' ? userLabel : assistantName;
   const lines: string[] = [`**${role}**`, ''];
   for (const block of message.content) {
     if (block.type === 'text') {
@@ -26,12 +26,12 @@ function messageToMarkdown(message: Message, userLabel: string): string {
   return lines.join('\n');
 }
 
-function CopyMdButton({ message, isUser, userLabel, label, copiedLabel }: { message: Message; isUser: boolean; userLabel: string; label: string; copiedLabel: string }) {
+function CopyMdButton({ message, isUser, userLabel, assistantName, label, copiedLabel }: { message: Message; isUser: boolean; userLabel: string; assistantName: string; label: string; copiedLabel: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(messageToMarkdown(message, userLabel));
+    await navigator.clipboard.writeText(messageToMarkdown(message, userLabel, assistantName));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -299,9 +299,10 @@ interface MessageBubbleProps {
   message: Message;
   nextMessage?: Message;
   filters: MessageFilters;
+  assistantName: string;
 }
 
-export default function MessageBubble({ message, nextMessage, filters }: MessageBubbleProps) {
+export default function MessageBubble({ message, nextMessage, filters, assistantName }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -355,7 +356,7 @@ export default function MessageBubble({ message, nextMessage, filters }: Message
         <div className={`flex items-center gap-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
           <span className="text-xs text-gray-600">{timeStr}</span>
           {message.usage && <TokenBadge usage={message.usage} />}
-          <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} />
+          <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} assistantName={assistantName} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} />
           <CopyImgButton bubbleRef={bubbleRef} isUser={isUser} label={t('msgCopyImg')} copiedLabel={t('msgCopied')} />
         </div>
       </div>

@@ -7,6 +7,6 @@ const version = Date.now();
 
 const content = fs.readFileSync(swPath, 'utf8');
 // Replace any existing version (placeholder or previous timestamp)
-const stamped = content.replace(/claude-journal-[\w]+/, `claude-journal-${version}`);
+const stamped = content.replace(/const CACHE = 'claude-journal-[^']+';/, `const CACHE = 'claude-journal-${version}';`);
 fs.writeFileSync(swPath, stamped);
 console.log(`[SW] Build version stamped: ${version}`);

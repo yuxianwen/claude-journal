@@ -1,8 +1,16 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { Project, ConversationData } from '@/types';
-import { getAllProjects, getSession, searchSessions, SearchResult } from '@/lib/fs-reader';
+import { Project, ConversationData, Provider } from '@/types';
+import {
+  getAllProjects,
+  getCodexAllProjects,
+  getCodexSession,
+  getSession,
+  searchCodexSessions,
+  searchSessions,
+  SearchResult,
+} from '@/lib/fs-reader';
 import { saveHandle, loadHandle, clearHandle } from '@/lib/folder-store';
 
 function isLocalEnv() {
@@ -17,6 +25,9 @@ interface FolderContextType {
   error: string;
   hasFolder: boolean;
   isLocal: boolean;
+  provider: Provider;
+  assistantName: string;
+  setProvider: (provider: Provider) => void;
   pickFolder: () => Promise<void>;
   changeFolder: () => Promise<void>;
   reload: () => Promise<void>;
@@ -45,6 +56,12 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
   const [hasFolder, setHasFolder] = useState(false);
   const [isLocal] = useState(isLocalEnv);
+  const [provider, setProviderState] = useState<Provider>(() => {
+    if (typeof window === 'undefined') return 'claude';
+    if (new URLSearchParams(window.location.search).get('provider') === 'codex') return 'codex';
+    return localStorage.getItem('claude-journal-provider') === 'codex' ? 'codex' : 'claude';
+  });
+  const assistantName = provider === 'codex' ? 'Codex' : 'Claude';
 
   // Skip a state update when a refresh produced an identical project list, so
   // periodic polling doesn't trigger needless sidebar re-renders.
@@ -62,7 +79,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/projects');
+      const res = await fetch(`/api/projects?provider=${provider}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       applyProjects(data);
@@ -72,7 +89,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [applyProjects]);
+  }, [applyProjects, provider]);
 
   // ── Remote: load via File System Access API ────────────────────────────────
 
@@ -80,7 +97,9 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError('');
     try {
-      const data = await getAllProjects(handle);
+      const data = provider === 'codex'
+        ? await getCodexAllProjects(handle)
+        : await getAllProjects(handle);
       applyProjects(data);
       setHasFolder(true);
     } catch (e) {
@@ -88,7 +107,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [applyProjects]);
+  }, [applyProjects, provider]);
 
   // ── Silent refresh (polling): update the project list without the loading
   //    flicker, and skip entirely while the tab is hidden. ──────────────────
@@ -96,16 +115,18 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
     try {
       if (isLocal) {
-        const res = await fetch('/api/projects');
+        const res = await fetch(`/api/projects?provider=${provider}`);
         if (!res.ok) return;
         applyProjects(await res.json());
       } else if (handleRef.current) {
-        applyProjects(await getAllProjects(handleRef.current));
+        applyProjects(provider === 'codex'
+          ? await getCodexAllProjects(handleRef.current)
+          : await getAllProjects(handleRef.current));
       }
     } catch {
       // transient read error; next tick retries
     }
-  }, [isLocal, applyProjects]);
+  }, [isLocal, applyProjects, provider]);
 
   // ── Init ───────────────────────────────────────────────────────────────────
 
@@ -139,6 +160,19 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     }
     initRemote();
   }, [isLocal, loadFromApi, loadFromHandle]);
+
+  const setProvider = useCallback((next: Provider) => {
+    if (next === provider) return;
+    localStorage.setItem('claude-journal-provider', next);
+    projectsSigRef.current = '';
+    setProjects([]);
+    setHasFolder(false);
+    if (!isLocal) {
+      handleRef.current = null;
+      void clearHandle();
+    }
+    setProviderState(next);
+  }, [isLocal, provider]);
 
   // ── Folder picker (remote only) ────────────────────────────────────────────
 
@@ -189,27 +223,32 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   const getSessionData = useCallback(async (projectId: string, sessionId: string, since?: number) => {
     if (isLocal) {
       const params = new URLSearchParams({ projectId, sessionId });
+      params.set('provider', provider);
       if (since != null) params.set('since', String(since));
       const res = await fetch(`/api/sessions?${params.toString()}`);
       if (!res.ok) return null;
       return res.json();
     }
     if (!handleRef.current) return null;
-    return getSession(handleRef.current, projectId, sessionId, since);
-  }, [isLocal]);
+    return provider === 'codex'
+      ? getCodexSession(handleRef.current, projectId, sessionId, since)
+      : getSession(handleRef.current, projectId, sessionId, since);
+  }, [isLocal, provider]);
 
   const search = useCallback(async (query: string) => {
     if (isLocal) {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search?provider=${provider}&q=${encodeURIComponent(query)}`);
       if (!res.ok) return [];
       return res.json();
     }
     if (!handleRef.current) return [];
-    return searchSessions(handleRef.current, query);
-  }, [isLocal]);
+    return provider === 'codex'
+      ? searchCodexSessions(handleRef.current, query)
+      : searchSessions(handleRef.current, query);
+  }, [isLocal, provider]);
 
   return (
-    <FolderContext.Provider value={{ projects, loading, error, hasFolder, isLocal, pickFolder, changeFolder, reload, getSessionData, search }}>
+    <FolderContext.Provider value={{ projects, loading, error, hasFolder, isLocal, provider, assistantName, setProvider, pickFolder, changeFolder, reload, getSessionData, search }}>
       {children}
     </FolderContext.Provider>
   );

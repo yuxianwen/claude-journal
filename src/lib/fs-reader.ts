@@ -1,4 +1,9 @@
 import { Project, SessionMeta, TokenUsage, Message, ContentBlock, ConversationData } from '@/types';
+import {
+  buildCodexMessages,
+  codexMessageText,
+  parseCodexSessionMeta,
+} from '@/lib/codex-shared';
 
 function emptyUsage(): TokenUsage {
   return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreateTokens: 0 };
@@ -87,7 +92,7 @@ function parseSessionMeta(projectId: string, sessionId: string, content: string)
     if (!title) title = sessionId.slice(0, 8);
   }
 
-  return { id: sessionId, projectId, title, startTime, endTime, messageCount, toolCallCount, tokenUsage, cwd, model };
+  return { id: sessionId, provider: 'claude', projectId, title, startTime, endTime, messageCount, toolCallCount, tokenUsage, cwd, model };
 }
 
 // Cache parsed session metadata keyed by "<dir>/<file>", invalidated by the
@@ -133,7 +138,7 @@ export async function getAllProjects(dirHandle: FileSystemDirectoryHandle): Prom
     const name = cwd ? cwd.split('/').filter(Boolean).pop() || dirName : dirName;
     const totalTokens = sessions.reduce((acc, s) => addUsage(acc, s.tokenUsage), emptyUsage());
 
-    projects.push({ id: dirName, name, cwd, sessions, totalTokens });
+    projects.push({ id: dirName, provider: 'claude', name, cwd, sessions, totalTokens });
   }
 
   return projects.sort((a, b) => {
@@ -289,6 +294,129 @@ export async function searchSessions(
         break;
       }
 
+      if (results.length >= 50) return results;
+    }
+  }
+
+  return results;
+}
+
+async function walkCodexJsonl(
+  dirHandle: FileSystemDirectoryHandle,
+  prefix = '',
+): Promise<Array<{ id: string; handle: FileSystemFileHandle }>> {
+  const files: Array<{ id: string; handle: FileSystemFileHandle }> = [];
+  for await (const [name, handle] of dirHandle.entries()) {
+    const id = prefix ? `${prefix}/${name}` : name;
+    if (handle.kind === 'directory') {
+      files.push(...await walkCodexJsonl(handle as FileSystemDirectoryHandle, id));
+    } else if (handle.kind === 'file' && name.endsWith('.jsonl')) {
+      files.push({ id, handle: handle as FileSystemFileHandle });
+    }
+  }
+  return files;
+}
+
+async function getCodexFileHandleById(
+  dirHandle: FileSystemDirectoryHandle,
+  sessionId: string,
+): Promise<FileSystemFileHandle | null> {
+  const parts = sessionId.split('/').filter(Boolean);
+  if (parts.length === 0 || parts.some(part => part === '..' || part.includes('\\'))) return null;
+
+  let current = dirHandle;
+  for (const part of parts.slice(0, -1)) {
+    try {
+      current = await current.getDirectoryHandle(part);
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    return await current.getFileHandle(parts[parts.length - 1]);
+  } catch {
+    return null;
+  }
+}
+
+const codexMetaCache = new Map<string, { mtimeMs: number; meta: SessionMeta }>();
+
+async function getCodexSessionMetaCached(sessionId: string, file: File): Promise<SessionMeta> {
+  const hit = codexMetaCache.get(sessionId);
+  if (hit && hit.mtimeMs === file.lastModified) return hit.meta;
+  const meta = parseCodexSessionMeta(sessionId, await file.text(), file.lastModified);
+  codexMetaCache.set(sessionId, { mtimeMs: file.lastModified, meta });
+  return meta;
+}
+
+export async function getCodexAllProjects(dirHandle: FileSystemDirectoryHandle): Promise<Project[]> {
+  const sessionFiles = await walkCodexJsonl(dirHandle);
+  const byProject = new Map<string, SessionMeta[]>();
+
+  for (const sessionFile of sessionFiles) {
+    const file = await sessionFile.handle.getFile();
+    const session = await getCodexSessionMetaCached(sessionFile.id, file);
+    const sessions = byProject.get(session.projectId) || [];
+    sessions.push(session);
+    byProject.set(session.projectId, sessions);
+  }
+
+  const projects: Project[] = [];
+  for (const [projectId, sessions] of byProject) {
+    sessions.sort((a, b) => b.endTime.localeCompare(a.endTime));
+    const cwd = sessions[0]?.cwd || '';
+    const name = cwd ? cwd.split('/').filter(Boolean).pop() || projectId : projectId;
+    const totalTokens = sessions.reduce((acc, s) => addUsage(acc, s.tokenUsage), emptyUsage());
+    projects.push({ id: projectId, provider: 'codex', name, cwd, sessions, totalTokens });
+  }
+
+  return projects.sort((a, b) => (b.sessions[0]?.endTime || '').localeCompare(a.sessions[0]?.endTime || ''));
+}
+
+export async function getCodexSession(
+  dirHandle: FileSystemDirectoryHandle,
+  projectId: string,
+  sessionId: string,
+  since?: number,
+): Promise<ConversationData | { unchanged: true } | null> {
+  const fileHandle = await getCodexFileHandleById(dirHandle, sessionId);
+  if (!fileHandle) return null;
+
+  const file = await fileHandle.getFile();
+  const mtimeMs = file.lastModified;
+  if (since != null && mtimeMs <= since) return { unchanged: true };
+
+  const content = await file.text();
+  const session = parseCodexSessionMeta(sessionId, content, mtimeMs);
+  if (projectId && session.projectId !== projectId) return null;
+
+  return { session, messages: buildCodexMessages(content, session.endTime), mtimeMs };
+}
+
+export async function searchCodexSessions(
+  dirHandle: FileSystemDirectoryHandle,
+  query: string,
+): Promise<SearchResult[]> {
+  if (!query.trim()) return [];
+
+  const lowerQuery = query.toLowerCase();
+  const results: SearchResult[] = [];
+
+  for (const project of await getCodexAllProjects(dirHandle)) {
+    for (const session of project.sessions) {
+      const data = await getCodexSession(dirHandle, project.id, session.id);
+      if (!data || 'unchanged' in data) continue;
+      for (const message of data.messages) {
+        const text = codexMessageText(message);
+        const idx = text.toLowerCase().indexOf(lowerQuery);
+        if (idx === -1) continue;
+        const start = Math.max(0, idx - 80);
+        const end = Math.min(text.length, idx + query.length + 80);
+        const excerpt = (start > 0 ? '...' : '') + text.slice(start, end) + (end < text.length ? '...' : '');
+        results.push({ session, projectName: project.name, excerpt, messageUuid: message.uuid });
+        break;
+      }
       if (results.length >= 50) return results;
     }
   }

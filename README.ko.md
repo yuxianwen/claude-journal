@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-Claude Code 대화 기록을 로컬에서 탐색하고 검토하는 웹 앱입니다. `~/.claude/projects/`의 JSONL 세션 파일을 직접 읽으며, 별도 설정이 필요 없습니다.
+Claude Code와 Codex 대화 기록을 로컬에서 탐색하고 검토하는 웹 앱입니다. `~/.claude/projects/` 또는 `~/.codex/sessions/`의 JSONL 세션 파일을 직접 읽습니다.
 
 **언어:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
@@ -61,16 +61,27 @@ pnpm dev
 
 ## 데이터 소스
 
-앱은 로컬 파일만 읽습니다 — 네트워크 요청 없음, 데이터 업로드 없음. 세션 데이터 경로:
+모든 데이터는 내 컴퓨터에 남습니다. 앱은 브라우저의 File System Access API로 세션 파일을 직접 읽으며 업로드하지 않습니다.
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-각 `.jsonl` 파일은 하나의 Claude Code 세션에 해당하며, 전체 메시지 기록과 토큰 사용량이 포함됩니다.
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+각 `.jsonl` 파일은 하나의 세션에 해당하며 메시지 기록과 사용 가능한 토큰 사용량을 포함합니다.
 
 ## 키보드 단축키
 

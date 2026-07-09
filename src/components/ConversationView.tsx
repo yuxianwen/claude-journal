@@ -7,22 +7,22 @@ import { useI18n } from '@/i18n';
 import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
 
-function titleKey(projectId: string, sessionId: string) {
-  return `journal:title:${projectId}/${sessionId}`;
+function titleKey(provider: string, projectId: string, sessionId: string) {
+  return `journal:title:${provider}:${projectId}/${sessionId}`;
 }
 
-function EditableTitle({ projectId, sessionId, defaultTitle, editLabel }: { projectId: string; sessionId: string; defaultTitle: string; editLabel: string }) {
+function EditableTitle({ provider, projectId, sessionId, defaultTitle, editLabel }: { provider: string; projectId: string; sessionId: string; defaultTitle: string; editLabel: string }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(() => {
     if (typeof window === 'undefined') return defaultTitle;
-    return localStorage.getItem(titleKey(projectId, sessionId)) || defaultTitle;
+    return localStorage.getItem(titleKey(provider, projectId, sessionId)) || defaultTitle;
   });
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(titleKey(projectId, sessionId));
+    const saved = localStorage.getItem(titleKey(provider, projectId, sessionId));
     setTitle(saved || defaultTitle);
-  }, [projectId, sessionId, defaultTitle]);
+  }, [provider, projectId, sessionId, defaultTitle]);
 
   useEffect(() => {
     if (editing) inputRef.current?.select();
@@ -32,9 +32,9 @@ function EditableTitle({ projectId, sessionId, defaultTitle, editLabel }: { proj
     const trimmed = val.trim() || defaultTitle;
     setTitle(trimmed);
     if (trimmed === defaultTitle) {
-      localStorage.removeItem(titleKey(projectId, sessionId));
+      localStorage.removeItem(titleKey(provider, projectId, sessionId));
     } else {
-      localStorage.setItem(titleKey(projectId, sessionId), trimmed);
+      localStorage.setItem(titleKey(provider, projectId, sessionId), trimmed);
     }
     setEditing(false);
   };
@@ -87,10 +87,10 @@ function CopyButton({ text, label, copiedLabel }: { text: string; label: string;
   );
 }
 
-function exportToMarkdown(data: ConversationData, userLabel: string): string {
+function exportToMarkdown(data: ConversationData, userLabel: string, assistantName: string): string {
   const lines: string[] = [`# ${data.session.title}`, '', `> ${new Date(data.session.startTime).toLocaleString()}`, ''];
   for (const msg of data.messages) {
-    const role = msg.type === 'user' ? `**${userLabel}**` : '**Claude**';
+    const role = msg.type === 'user' ? `**${userLabel}**` : `**${assistantName}**`;
     lines.push(`## ${role}`);
     lines.push('');
     for (const block of msg.content) {
@@ -148,6 +148,7 @@ function FilterChip({
 interface ConversationViewProps {
   projectId: string;
   sessionId: string;
+  assistantName: string;
   highlightMessageId?: string;
   filters: MessageFilters;
   onToggleFilter: (key: keyof MessageFilters) => void;
@@ -160,7 +161,7 @@ function convSig(d: ConversationData): string {
   return `${d.messages.length}:${last?.uuid ?? ''}:${d.session.endTime}:${d.session.title}`;
 }
 
-export default function ConversationView({ projectId, sessionId, highlightMessageId, filters, onToggleFilter }: ConversationViewProps) {
+export default function ConversationView({ projectId, sessionId, assistantName, highlightMessageId, filters, onToggleFilter }: ConversationViewProps) {
   const { t } = useI18n();
   const [data, setData] = useState<ConversationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -312,7 +313,7 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-800 flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <EditableTitle projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
+          <EditableTitle provider={data.session.provider} projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
           <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
@@ -320,9 +321,9 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
           <FilterChip active={filters.tools} onToggle={() => onToggleFilter('tools')} icon="🔧" label={t('filterTools')} />
           <span className="w-px h-3 bg-gray-700/40 dark:bg-gray-700/40 mx-0.5 flex-shrink-0" />
           <FilterChip active={filters.userMessages} onToggle={() => onToggleFilter('userMessages')} icon="👤" label={t('filterUser')} />
-          <FilterChip active={filters.assistantMessages} onToggle={() => onToggleFilter('assistantMessages')} icon="🤖" label={t('filterClaude')} />
+          <FilterChip active={filters.assistantMessages} onToggle={() => onToggleFilter('assistantMessages')} icon="🤖" label={assistantName} />
         </div>
-        <CopyButton text={exportToMarkdown(data, t('msgUser'))} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
+        <CopyButton text={exportToMarkdown(data, t('msgUser'), assistantName)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
 
       {/* Stats */}
@@ -340,6 +341,7 @@ export default function ConversationView({ projectId, sessionId, highlightMessag
               message={msg}
               nextMessage={visibleMessages[idx + 1]}
               filters={filters}
+              assistantName={assistantName}
             />
           </div>
         ))}

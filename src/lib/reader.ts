@@ -127,6 +127,7 @@ function parseSessionFile(filePath: string): SessionMeta {
 
   return {
     id: sessionId,
+    provider: 'claude',
     projectId,
     title,
     startTime,
@@ -167,7 +168,7 @@ export function getAllProjects(): Project[] {
       emptyUsage()
     );
 
-    projects.push({ id: dirName, name, cwd, sessions, totalTokens });
+    projects.push({ id: dirName, provider: 'claude', name, cwd, sessions, totalTokens });
   }
 
   return projects.sort((a, b) => {

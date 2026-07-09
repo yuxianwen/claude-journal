@@ -1,3 +1,5 @@
+export type Provider = 'claude' | 'codex';
+
 export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
@@ -7,6 +9,7 @@ export interface TokenUsage {
 
 export interface SessionMeta {
   id: string;
+  provider: Provider;
   projectId: string;
   title: string;
   startTime: string;
@@ -20,6 +23,7 @@ export interface SessionMeta {
 
 export interface Project {
   id: string;
+  provider: Provider;
   name: string;
   cwd: string;
   sessions: SessionMeta[];

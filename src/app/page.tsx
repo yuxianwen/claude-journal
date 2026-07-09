@@ -18,13 +18,25 @@ function useIsWindows() {
 }
 
 function FolderPicker() {
-  const { pickFolder, error } = useFolderContext();
+  const { pickFolder, error, provider, setProvider } = useFolderContext();
   const { t } = useI18n();
   const isWindows = useIsWindows();
+  const isCodex = provider === 'codex';
+  const macPath = isCodex ? '~/.codex/sessions' : '~/.claude/projects';
+  const winPath = isCodex ? '%USERPROFILE%\\.codex\\sessions' : '%APPDATA%\\Claude\\projects';
 
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex items-center justify-end gap-2 px-6 py-3 border-b border-gray-800/50">
+        <select
+          value={provider}
+          onChange={e => setProvider(e.target.value === 'codex' ? 'codex' : 'claude')}
+          className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 outline-none"
+          title="Data source"
+        >
+          <option value="claude">Claude</option>
+          <option value="codex">Codex</option>
+        </select>
         <ThemeSwitcher />
         <LangSwitcher />
       </div>
@@ -38,15 +50,15 @@ function FolderPicker() {
               <span className="text-base mt-0.5">🍎</span>
               <div>
                 <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerMac')}</p>
-                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">~/.claude/projects</code>
+                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">{macPath}</code>
               </div>
             </div>
             <div className={`flex items-start gap-2.5 ${isWindows ? '' : 'opacity-40'}`}>
               <span className="text-base mt-0.5">🪟</span>
               <div>
                 <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerWindows')}</p>
-                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\projects</code>
-                <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>
+                <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">{winPath}</code>
+                {!isCodex && <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>}
               </div>
             </div>
           </div>
@@ -64,14 +76,15 @@ function FolderPicker() {
 }
 
 export default function Home() {
-  const { projects, loading, hasFolder, isLocal } = useFolderContext();
+  const { projects, loading, hasFolder, isLocal, provider, assistantName } = useFolderContext();
   const { t } = useI18n();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
       const p = new URLSearchParams(window.location.search).get('p');
       if (p) return p;
-      return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.projectId ?? null;
+      const saved = JSON.parse(localStorage.getItem('claude-journal-selected') || 'null');
+      return saved?.provider === (localStorage.getItem('claude-journal-provider') || 'claude') ? saved.projectId ?? null : null;
     } catch { return null; }
   });
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
@@ -79,7 +92,8 @@ export default function Home() {
     try {
       const s = new URLSearchParams(window.location.search).get('s');
       if (s) return s;
-      return JSON.parse(localStorage.getItem('claude-journal-selected') || 'null')?.sessionId ?? null;
+      const saved = JSON.parse(localStorage.getItem('claude-journal-selected') || 'null');
+      return saved?.provider === (localStorage.getItem('claude-journal-provider') || 'claude') ? saved.sessionId ?? null : null;
     } catch { return null; }
   });
   const [highlightMessageId, setHighlightMessageId] = useState<string | undefined>(undefined);
@@ -94,6 +108,7 @@ export default function Home() {
   useEffect(() => {
     if (!selectedProjectId || !selectedSessionId) return;
     const url = new URL(window.location.href);
+    url.searchParams.set('provider', provider);
     url.searchParams.set('p', selectedProjectId);
     url.searchParams.set('s', selectedSessionId);
     const switched = prevSessionRef.current !== null && (
@@ -103,8 +118,8 @@ export default function Home() {
     if (switched) url.searchParams.delete('scroll');
     prevSessionRef.current = { projectId: selectedProjectId, sessionId: selectedSessionId };
     window.history.replaceState(null, '', url.toString());
-    localStorage.setItem('claude-journal-selected', JSON.stringify({ projectId: selectedProjectId, sessionId: selectedSessionId }));
-  }, [selectedProjectId, selectedSessionId]);
+    localStorage.setItem('claude-journal-selected', JSON.stringify({ provider, projectId: selectedProjectId, sessionId: selectedSessionId }));
+  }, [provider, selectedProjectId, selectedSessionId]);
 
   // Fall back to first session if saved selection no longer exists
   useEffect(() => {
@@ -206,9 +221,10 @@ export default function Home() {
           <FolderPicker />
         ) : selectedProjectId && selectedSessionId && !loading ? (
           <ConversationView
-            key={`${selectedProjectId}/${selectedSessionId}`}
+            key={`${provider}/${selectedProjectId}/${selectedSessionId}`}
             projectId={selectedProjectId}
             sessionId={selectedSessionId}
+            assistantName={assistantName}
             highlightMessageId={highlightMessageId}
             filters={filters}
             onToggleFilter={toggleFilter}

@@ -67,7 +67,7 @@ export interface T {
 // {n} is replaced with the numeric value at runtime
 export const translations: Record<Locale, T> = {
   'zh-CN': {
-    pickerTitle: '选择 Claude 数据目录',
+    pickerTitle: '选择数据目录',
     pickerDesc: '浏览器将直接从本地读取数据，不会上传到任何服务器。',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -113,7 +113,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'en': {
-    pickerTitle: 'Select Claude data directory',
+    pickerTitle: 'Select data directory',
     pickerDesc: 'The browser reads your files directly — nothing is uploaded.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -159,7 +159,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'ja': {
-    pickerTitle: 'Claude データフォルダを選択',
+    pickerTitle: 'データフォルダを選択',
     pickerDesc: 'ブラウザがローカルファイルを直接読み取ります。データはアップロードされません。',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -205,7 +205,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'ko': {
-    pickerTitle: 'Claude 데이터 폴더 선택',
+    pickerTitle: '데이터 폴더 선택',
     pickerDesc: '브라우저가 로컬 파일을 직접 읽습니다. 데이터는 업로드되지 않습니다.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -251,7 +251,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'es': {
-    pickerTitle: 'Seleccionar directorio de datos de Claude',
+    pickerTitle: 'Seleccionar directorio de datos',
     pickerDesc: 'El navegador lee los archivos localmente. No se sube nada.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -297,7 +297,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'fr': {
-    pickerTitle: 'Sélectionner le dossier Claude',
+    pickerTitle: 'Sélectionner le dossier de données',
     pickerDesc: "Le navigateur lit les fichiers localement. Aucune donnée n'est envoyée.",
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -343,7 +343,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'de': {
-    pickerTitle: 'Claude-Datenordner auswählen',
+    pickerTitle: 'Datenordner auswählen',
     pickerDesc: 'Der Browser liest Dateien lokal. Es werden keine Daten hochgeladen.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -389,7 +389,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'pt': {
-    pickerTitle: 'Selecionar pasta de dados do Claude',
+    pickerTitle: 'Selecionar pasta de dados',
     pickerDesc: 'O navegador lê os arquivos localmente. Nenhum dado é enviado.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -435,7 +435,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'ru': {
-    pickerTitle: 'Выбрать папку данных Claude',
+    pickerTitle: 'Выбрать папку данных',
     pickerDesc: 'Браузер читает файлы локально. Данные не загружаются.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -481,7 +481,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'ar': {
-    pickerTitle: 'اختر مجلد بيانات Claude',
+    pickerTitle: 'اختر مجلد البيانات',
     pickerDesc: 'يقرأ المتصفح الملفات محلياً. لا يتم رفع أي بيانات.',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',
@@ -527,7 +527,7 @@ export const translations: Record<Locale, T> = {
     filterClaude: 'Claude',
   },
   'hi': {
-    pickerTitle: 'Claude डेटा फ़ोल्डर चुनें',
+    pickerTitle: 'डेटा फ़ोल्डर चुनें',
     pickerDesc: 'ब्राउज़र फ़ाइलें सीधे स्थानीय रूप से पढ़ता है। कोई डेटा अपलोड नहीं होता।',
     pickerMac: 'macOS / Linux',
     pickerWindows: 'Windows',

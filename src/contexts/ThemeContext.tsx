@@ -24,13 +24,17 @@ function getSystemTheme(): 'light' | 'dark' {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
-
-  useEffect(() => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system';
     const saved = (localStorage.getItem('claude-journal-theme') as Theme) || 'system';
-    setThemeState(saved);
-  }, []);
+    return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
+  });
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const saved = (localStorage.getItem('claude-journal-theme') as Theme) || 'system';
+    const theme = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
+    return theme === 'system' ? getSystemTheme() : theme;
+  });
 
   useEffect(() => {
     const resolved = theme === 'system' ? getSystemTheme() : theme;

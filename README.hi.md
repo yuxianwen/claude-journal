@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-Claude Code की बातचीत के इतिहास को स्थानीय रूप से ब्राउज़ और समीक्षा करने के लिए एक लोकल वेब ऐप। `~/.claude/projects/` से सीधे JSONL सत्र फ़ाइलें पढ़ता है — कोई कॉन्फ़िगरेशन आवश्यक नहीं।
+Claude Code और Codex की बातचीत के इतिहास को स्थानीय रूप से ब्राउज़ और समीक्षा करने के लिए एक लोकल वेब ऐप। `~/.claude/projects/` या `~/.codex/sessions/` से सीधे JSONL सत्र फ़ाइलें पढ़ता है।
 
 **भाषा:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | हिन्दी
 
@@ -61,16 +61,27 @@ pnpm dev
 
 ## डेटा स्रोत
 
-ऐप केवल स्थानीय फ़ाइलें पढ़ता है — कोई नेटवर्क अनुरोध नहीं, कोई डेटा अपलोड नहीं। सत्र डेटा पथ:
+सारा डेटा आपकी मशीन पर रहता है। ऐप ब्राउज़र की File System Access API से सत्र फ़ाइलों को सीधे पढ़ता है; कुछ भी अपलोड नहीं होता।
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-प्रत्येक `.jsonl` फ़ाइल एक Claude Code सत्र के अनुरूप है और इसमें टोकन उपयोग के साथ पूर्ण संदेश इतिहास है।
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+प्रत्येक `.jsonl` फ़ाइल एक सत्र से संबंधित होती है और संदेश इतिहास तथा उपलब्ध token उपयोग शामिल करती है।
 
 ## कीबोर्ड शॉर्टकट
 

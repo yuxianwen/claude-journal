@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude Code Konversationshistorie. Liest JSONL-Sitzungsdateien direkt aus `~/.claude/projects/` — keine Konfiguration erforderlich.
+Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude-Code- und Codex-Konversationshistorie. Liest JSONL-Sitzungsdateien direkt aus `~/.claude/projects/` oder `~/.codex/sessions/`.
 
 **Sprache:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | Deutsch | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md) | [हिन्दी](README.hi.md)
 
@@ -61,16 +61,27 @@ pnpm dev
 
 ## Datenquelle
 
-Die App liest nur lokale Dateien — keine Netzwerkanfragen, keine hochgeladenen Daten. Pfad der Sitzungsdaten:
+Alle Daten bleiben auf deinem Rechner. Die App liest Sitzungsdateien direkt über die File System Access API des Browsers; es wird nichts hochgeladen.
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-Jede `.jsonl`-Datei entspricht einer Claude Code Sitzung und enthält den vollständigen Nachrichtenverlauf sowie die Token-Nutzung.
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+Jede `.jsonl`-Datei entspricht einer Sitzung und enthält den Nachrichtenverlauf sowie verfügbare Token-Nutzungsdaten.
 
 ## Tastaturkürzel
 

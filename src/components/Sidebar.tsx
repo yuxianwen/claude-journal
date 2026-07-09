@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Project, SessionMeta } from '@/types';
+import { Project, Provider, SessionMeta } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import LangSwitcher from './LangSwitcher';
@@ -66,7 +66,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession, onToggle }: SidebarProps) {
-  const { changeFolder, reload } = useFolderContext();
+  const { changeFolder, reload, provider, setProvider } = useFolderContext();
   const { t, locale } = useI18n();
   const [reloading, setReloading] = useState(false);
   const [filter, setFilter] = useState('');
@@ -118,8 +118,17 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
     <aside className="w-72 min-w-[18rem] bg-gray-900 border-r border-gray-800 flex flex-col h-full overflow-hidden">
       <div className="px-4 py-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
-          <h1 className="text-sm font-semibold text-gray-200 tracking-wide">Claude Journal</h1>
+          <h1 className="text-sm font-semibold text-gray-200 tracking-wide">AI Journal</h1>
           <div className="flex items-center gap-2">
+            <select
+              value={provider}
+              onChange={e => setProvider(e.target.value as Provider)}
+              className="bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-gray-300 outline-none"
+              title="Data source"
+            >
+              <option value="claude">Claude</option>
+              <option value="codex">Codex</option>
+            </select>
             <ThemeSwitcher />
             <LangSwitcher />
             <button

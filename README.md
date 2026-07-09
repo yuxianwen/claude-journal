@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-A PWA for browsing and reviewing your Claude Code conversation history. Runs entirely in the browser — reads your local `~/.claude/projects/` files directly via the File System Access API. No server, no data uploaded.
+A PWA for browsing and reviewing Claude Code and Codex conversation history. Runs entirely in the browser for remote use — reads local files directly via the File System Access API. No server, no data uploaded.
 
 **Live Demo:** [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)
 
@@ -15,15 +15,16 @@ A PWA for browsing and reviewing your Claude Code conversation history. Runs ent
 - **Conversation Rendering** — Full Markdown rendering, syntax-highlighted code blocks (Shiki), GFM tables & task lists
 - **Inline Images** — Images embedded in messages (base64 or URL) are rendered inline; click any image to view it full-size
 - **Image Lightbox** — Full-screen overlay with backdrop blur; close with `Esc` or by clicking outside
-- **Tool Call Visualization** — See every tool call Claude made (Bash, file reads/writes, screenshots, etc.) and its output, including inline image results
-- **Thinking Blocks** — Collapsible display of Claude's reasoning process
+- **Claude / Codex Sources** — Switch between Claude Code history and Codex history from the sidebar
+- **Tool Call Visualization** — See every tool call made by the assistant (Bash, file reads/writes, screenshots, etc.) and its output, including inline image results
+- **Thinking Blocks** — Collapsible display of reasoning content when available
 - **Slash Command Display** — `/command` messages render as styled chips instead of raw XML
 - **Local Command Output** — Shell command output blocks display as terminal-style UI; verbose caveats are collapsible
 - **Token Stats** — Input / output / cache-hit token counts per session
 - **Full-text Search** — `⌘K` to search across all sessions instantly
 - **Export to Markdown / Image** — Copy any message as Markdown or as a screenshot with one click
 - **Theme Switcher** — Light, dark, or system theme with persistent preference
-- **Persistent Filter Bar** — Filter settings (thinking, tools, user/Claude messages) survive session switches
+- **Persistent Filter Bar** — Filter settings (thinking, tools, user/assistant messages) survive session switches
 - **Session Memory** — Last-viewed conversation is restored on refresh via URL parameters
 - **Shareable URLs** — Copy the URL to share or bookmark an exact conversation and scroll position (`?p=&s=&scroll=`)
 - **Back to Top** — Floating button appears when scrolled far down; one click returns to the top
@@ -36,7 +37,7 @@ A PWA for browsing and reviewing your Claude Code conversation history. Runs ent
 
 ### Option 1 — Use Online (Recommended)
 
-Open [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org) and click **"选择文件夹"** to grant access to your `~/.claude/projects/` folder. The browser reads files directly from your machine — nothing is uploaded.
+Open [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org), choose **Claude** or **Codex**, then click **"选择文件夹"**. Select `~/.claude/projects/` for Claude Code or `~/.codex/sessions/` for Codex. The browser reads files directly from your machine — nothing is uploaded.
 
 Your folder selection is persisted locally (IndexedDB), so subsequent visits load automatically.
 
@@ -51,7 +52,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Local mode can read `~/.claude/projects/` and `~/.codex/sessions/` through the app's API routes.
 
 ## Tech Stack
 
@@ -69,14 +70,25 @@ Open [http://localhost:3000](http://localhost:3000).
 
 All data stays on your machine. The app uses the browser's [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) to read session files directly — no network requests, no uploads.
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-Each `.jsonl` file corresponds to one Claude Code session and contains the full message history along with token usage.
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+Each `.jsonl` file corresponds to one session and contains message history plus available token usage.
 
 ## Keyboard Shortcuts
 

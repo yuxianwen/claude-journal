@@ -1,6 +1,6 @@
-# Claude Journal
+# AI Journal
 
-تطبيق ويب محلي لتصفح ومراجعة سجل محادثات Claude Code. يقرأ ملفات JSONL مباشرةً من `~/.claude/projects/` — دون الحاجة إلى أي إعداد.
+تطبيق ويب محلي لتصفح ومراجعة سجل محادثات Claude Code و Codex. يقرأ ملفات JSONL مباشرةً من `~/.claude/projects/` أو `~/.codex/sessions/`.
 
 **اللغة:** [简体中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português](README.pt.md) | [Русский](README.ru.md) | العربية | [हिन्दी](README.hi.md)
 
@@ -61,16 +61,27 @@ pnpm dev
 
 ## مصدر البيانات
 
-يقرأ التطبيق الملفات المحلية فقط — لا طلبات شبكة، لا بيانات مرفوعة. مسار بيانات الجلسة:
+تبقى كل البيانات على جهازك. يستخدم التطبيق File System Access API في المتصفح لقراءة ملفات الجلسات مباشرةً، ولا يتم رفع أي شيء.
 
-```
+Claude Code:
+
+```txt
 ~/.claude/projects/
   └── <project-id>/
         ├── <session-id>.jsonl
         └── ...
 ```
 
-كل ملف `.jsonl` يتوافق مع جلسة Claude Code واحدة ويحتوي على السجل الكامل للرسائل مع استخدام الرموز.
+Codex:
+
+```txt
+~/.codex/sessions/
+  └── YYYY/MM/DD/
+        ├── rollout-<timestamp>-<id>.jsonl
+        └── ...
+```
+
+يمثل كل ملف `.jsonl` جلسة واحدة ويتضمن سجل الرسائل واستخدام الرموز المتاح.
 
 ## اختصارات لوحة المفاتيح
 

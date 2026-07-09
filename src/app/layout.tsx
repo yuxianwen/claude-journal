@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Claude Journal",
-  description: "Claude Code 对话记录浏览器",
+  title: "AI Journal",
+  description: "Claude Code / Codex 对话记录浏览器",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Claude Journal",
+    title: "AI Journal",
   },
 };
 
@@ -44,19 +44,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Prevent theme flash on load */}
-        <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var t = localStorage.getItem('claude-journal-theme') || 'system';
-  var resolved = t === 'system'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : t;
-  document.documentElement.classList.remove('dark','light');
-  document.documentElement.classList.add(resolved);
-})();
-        `}} />
-      </head>
       <body className="min-h-full flex flex-col">
         <SwRegister />
         <Analytics />
