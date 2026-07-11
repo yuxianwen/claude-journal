@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Locale, T, LOCALES, translations, detectLocale, RTL_LOCALES } from './locales';
 
 interface I18nContextType {
@@ -10,6 +10,21 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType | null>(null);
+const LOCALE_CHANGE_EVENT = 'ai-journal-locale-change';
+
+function subscribeLocale(onStoreChange: () => void) {
+  const onChange = () => onStoreChange();
+  window.addEventListener('storage', onChange);
+  window.addEventListener(LOCALE_CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener('storage', onChange);
+    window.removeEventListener(LOCALE_CHANGE_EVENT, onChange);
+  };
+}
+
+function getServerLocale(): Locale {
+  return 'en';
+}
 
 export function useI18n() {
   const ctx = useContext(I18nContext);
@@ -18,11 +33,7 @@ export function useI18n() {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en');
-
-  useEffect(() => {
-    setLocaleState(detectLocale());
-  }, []);
+  const locale = useSyncExternalStore(subscribeLocale, detectLocale, getServerLocale);
 
   // Sync <html lang> and dir attributes
   useEffect(() => {
@@ -33,7 +44,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback((l: Locale) => {
     if (!LOCALES.includes(l)) return;
     localStorage.setItem('claude-journal-locale', l);
-    setLocaleState(l);
+    window.dispatchEvent(new Event(LOCALE_CHANGE_EVENT));
   }, []);
 
   const t = useCallback((key: keyof T, vars?: { n?: number }): string => {

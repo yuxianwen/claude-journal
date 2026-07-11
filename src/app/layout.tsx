@@ -5,8 +5,6 @@ import { FolderProvider } from "@/contexts/FolderContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { I18nProvider } from "@/i18n";
 import SwRegister from "@/components/SwRegister";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +20,7 @@ export const metadata: Metadata = {
   title: "AI Journal",
   description: "Claude Code / Codex 对话记录浏览器",
   manifest: "/manifest.json",
+  icons: { icon: "/icon.svg" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -46,8 +45,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SwRegister />
-        <Analytics />
-        <SpeedInsights />
         <ThemeProvider>
           <I18nProvider>
             <FolderProvider>{children}</FolderProvider>

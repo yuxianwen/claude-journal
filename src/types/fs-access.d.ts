@@ -4,6 +4,7 @@
 interface FileSystemHandle {
   readonly kind: 'file' | 'directory';
   readonly name: string;
+  isSameEntry(other: FileSystemHandle): Promise<boolean>;
 }
 
 interface FileSystemFileHandle extends FileSystemHandle {
@@ -21,5 +22,5 @@ interface FileSystemDirectoryHandle extends FileSystemHandle {
 }
 
 interface Window {
-  showDirectoryPicker(options?: { mode?: 'read' | 'readwrite'; startIn?: string }): Promise<FileSystemDirectoryHandle>;
+  showDirectoryPicker?(options?: { mode?: 'read' | 'readwrite'; startIn?: string }): Promise<FileSystemDirectoryHandle>;
 }

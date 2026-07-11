@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import Sidebar from '@/components/Sidebar';
@@ -9,18 +9,24 @@ import SearchView from '@/components/SearchView';
 import LangSwitcher from '@/components/LangSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 
-function useIsWindows() {
-  const [isWindows, setIsWindows] = useState(false);
-  useEffect(() => {
-    setIsWindows(navigator.userAgent.toLowerCase().includes('win'));
-  }, []);
-  return isWindows;
+const subscribeToStaticBrowserValue = () => () => {};
+
+function getIsWindowsSnapshot() {
+  return navigator.userAgent.toLowerCase().includes('win');
+}
+
+function getIsWindowsServerSnapshot() {
+  return false;
 }
 
 function FolderPicker() {
-  const { pickFolder, error, provider, setProvider } = useFolderContext();
+  const { pickFolder, error, folderIssue, supportsDirectoryPicker, provider, setProvider } = useFolderContext();
   const { t } = useI18n();
-  const isWindows = useIsWindows();
+  const isWindows = useSyncExternalStore(
+    subscribeToStaticBrowserValue,
+    getIsWindowsSnapshot,
+    getIsWindowsServerSnapshot,
+  );
   const isCodex = provider === 'codex';
   const macPath = isCodex ? '~/.codex/sessions' : '~/.claude/projects';
   const winPath = isCodex ? '%USERPROFILE%\\.codex\\sessions' : '%APPDATA%\\Claude\\projects';
@@ -32,7 +38,7 @@ function FolderPicker() {
           value={provider}
           onChange={e => setProvider(e.target.value === 'codex' ? 'codex' : 'claude')}
           className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 outline-none"
-          title="Data source"
+          title={t('pickerDataSource')}
         >
           <option value="claude">Claude</option>
           <option value="codex">Codex</option>
@@ -62,12 +68,22 @@ function FolderPicker() {
               </div>
             </div>
           </div>
+          {!supportsDirectoryPicker && (
+            <div className="text-left bg-amber-950/40 border border-amber-800/60 rounded-lg p-3 mb-4" role="alert">
+              <p className="text-amber-300 text-xs font-medium">{t('pickerUnsupported')}</p>
+              <p className="text-amber-500 text-xs mt-1 leading-relaxed">{t('pickerUnsupportedHint')}</p>
+            </div>
+          )}
           <button
             onClick={pickFolder}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+            disabled={!supportsDirectoryPicker}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
           >
             {t('pickerButton')}
           </button>
+          {folderIssue === 'empty' && <p className="text-amber-400 text-xs mt-3">{t('pickerEmpty')}</p>}
+          {folderIssue === 'permission' && <p className="text-amber-400 text-xs mt-3">{t('pickerPermissionDenied')}</p>}
+          {folderIssue === 'read' && <p className="text-red-400 text-xs mt-3">{t('pickerReadError')}</p>}
           {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
         </div>
       </div>
@@ -102,35 +118,38 @@ export default function Home() {
   // Track previous session to distinguish "initial load" from "actual switch"
   const prevSessionRef = useRef<{ projectId: string; sessionId: string } | null>(null);
 
+  const requestedProject = selectedProjectId
+    ? projects.find(project => project.id === selectedProjectId)
+    : undefined;
+  const requestedSelectionExists = Boolean(
+    requestedProject && selectedSessionId
+    && requestedProject.sessions.some(session => session.id === selectedSessionId),
+  );
+  const activeProjectId = requestedSelectionExists
+    ? selectedProjectId
+    : projects[0]?.id ?? null;
+  const activeSessionId = requestedSelectionExists
+    ? selectedSessionId
+    : projects[0]?.sessions[0]?.id ?? null;
+
   // Persist selected session to URL + localStorage.
   // Clear ?scroll only when the session actually changes (not on initial load),
-  // so shared URLs with a scroll param are honoured by ConversationView.
+  // so bookmarked URLs with a scroll param are honoured by ConversationView.
   useEffect(() => {
-    if (!selectedProjectId || !selectedSessionId) return;
+    if (!activeProjectId || !activeSessionId) return;
     const url = new URL(window.location.href);
     url.searchParams.set('provider', provider);
-    url.searchParams.set('p', selectedProjectId);
-    url.searchParams.set('s', selectedSessionId);
+    url.searchParams.set('p', activeProjectId);
+    url.searchParams.set('s', activeSessionId);
     const switched = prevSessionRef.current !== null && (
-      prevSessionRef.current.projectId !== selectedProjectId ||
-      prevSessionRef.current.sessionId !== selectedSessionId
+      prevSessionRef.current.projectId !== activeProjectId ||
+      prevSessionRef.current.sessionId !== activeSessionId
     );
     if (switched) url.searchParams.delete('scroll');
-    prevSessionRef.current = { projectId: selectedProjectId, sessionId: selectedSessionId };
+    prevSessionRef.current = { projectId: activeProjectId, sessionId: activeSessionId };
     window.history.replaceState(null, '', url.toString());
-    localStorage.setItem('claude-journal-selected', JSON.stringify({ provider, projectId: selectedProjectId, sessionId: selectedSessionId }));
-  }, [provider, selectedProjectId, selectedSessionId]);
-
-  // Fall back to first session if saved selection no longer exists
-  useEffect(() => {
-    if (projects.length === 0) return;
-    if (selectedProjectId && selectedSessionId) {
-      const project = projects.find(p => p.id === selectedProjectId);
-      if (project?.sessions.some(s => s.id === selectedSessionId)) return;
-    }
-    setSelectedProjectId(projects[0].id);
-    setSelectedSessionId(projects[0].sessions[0]?.id ?? null);
-  }, [projects]);
+    localStorage.setItem('claude-journal-selected', JSON.stringify({ provider, projectId: activeProjectId, sessionId: activeSessionId }));
+  }, [activeProjectId, activeSessionId, provider]);
 
   const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
   const toggleFilter = useCallback((key: keyof MessageFilters) => {
@@ -141,6 +160,7 @@ export default function Home() {
     setSelectedProjectId(projectId);
     setSelectedSessionId(sessionId);
     setHighlightMessageId(messageUuid);
+    if (window.matchMedia('(max-width: 767px)').matches) setSidebarOpen(false);
   }, []);
 
   useEffect(() => {
@@ -165,7 +185,7 @@ export default function Home() {
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Collapsible sidebar wrapper */}
       {!showPicker && (
-        <div className={`flex-shrink-0 overflow-hidden transition-all duration-200 ease-in-out ${sidebarOpen ? 'w-72' : 'w-0'}`}>
+        <div className={`fixed md:relative inset-y-0 left-0 z-50 h-full flex-shrink-0 overflow-hidden transition-all duration-200 ease-in-out ${sidebarOpen ? 'w-72' : 'w-0'}`}>
           {loading ? (
             <div className="w-72 bg-gray-900 border-r border-gray-800 h-full flex items-center justify-center">
               <div className="text-gray-600 text-xs animate-pulse">{t('convLoading')}</div>
@@ -173,13 +193,21 @@ export default function Home() {
           ) : hasFolder ? (
             <Sidebar
               projects={projects}
-              selectedProjectId={selectedProjectId}
-              selectedSessionId={selectedSessionId}
+              selectedProjectId={activeProjectId}
+              selectedSessionId={activeSessionId}
               onSelectSession={handleSelectSession}
               onToggle={() => setSidebarOpen(false)}
             />
           ) : null}
         </div>
+      )}
+      {!showPicker && sidebarOpen && (
+        <button
+          type="button"
+          aria-label={t('sidebarClose')}
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        />
       )}
 
       <main className="flex-1 flex flex-col min-w-0">
@@ -190,7 +218,7 @@ export default function Home() {
               {(hasFolder || loading) && (
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  title="Open sidebar (⌘\)"
+                  title={`${t('sidebarOpen')} (⌘\\)`}
                   className={`p-1.5 rounded text-gray-600 hover:text-slate-700 dark:hover:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800/40 transition-all duration-200 flex-shrink-0 ${sidebarOpen ? 'opacity-0 pointer-events-none w-0 p-0 overflow-hidden' : 'opacity-100'}`}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,11 +247,11 @@ export default function Home() {
 
         {showPicker ? (
           <FolderPicker />
-        ) : selectedProjectId && selectedSessionId && !loading ? (
+        ) : activeProjectId && activeSessionId && !loading ? (
           <ConversationView
-            key={`${provider}/${selectedProjectId}/${selectedSessionId}`}
-            projectId={selectedProjectId}
-            sessionId={selectedSessionId}
+            key={`${provider}/${activeProjectId}/${activeSessionId}`}
+            projectId={activeProjectId}
+            sessionId={activeSessionId}
             assistantName={assistantName}
             highlightMessageId={highlightMessageId}
             filters={filters}

@@ -10,11 +10,11 @@ import {
   parseCodexSessionMeta,
 } from '@/lib/codex-shared';
 
-const CODEX_SESSIONS_DIR = path.join(os.homedir(), '.codex', 'sessions');
+const CODEX_SESSIONS_DIR = path.join(/* turbopackIgnore: true */ os.homedir(), '.codex', 'sessions');
 
 function walkJsonl(dir: string, prefix = ''): string[] {
-  if (!fs.existsSync(dir)) return [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  if (!fs.existsSync(/* turbopackIgnore: true */ dir)) return [];
+  const entries = fs.readdirSync(/* turbopackIgnore: true */ dir, { withFileTypes: true });
   const files: string[] = [];
   for (const entry of entries) {
     const rel = path.join(prefix, entry.name);
@@ -38,14 +38,14 @@ const metaCache = new Map<string, { mtimeMs: number; meta: SessionMeta }>();
 function getSessionMetaCached(sessionId: string, filePath: string, mtimeMs: number): SessionMeta {
   const hit = metaCache.get(filePath);
   if (hit && hit.mtimeMs === mtimeMs) return hit.meta;
-  const meta = parseCodexSessionMeta(sessionId, fs.readFileSync(filePath, 'utf-8'), mtimeMs);
+  const meta = parseCodexSessionMeta(sessionId, fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8'), mtimeMs);
   metaCache.set(filePath, { mtimeMs, meta });
   return meta;
 }
 
 export function getCodexSessionMtime(_projectId: string, sessionId: string): number | null {
   try {
-    return fs.statSync(getSessionFile(sessionId)).mtimeMs;
+    return fs.statSync(/* turbopackIgnore: true */ getSessionFile(sessionId)).mtimeMs;
   } catch {
     return null;
   }
@@ -54,7 +54,7 @@ export function getCodexSessionMtime(_projectId: string, sessionId: string): num
 export function getCodexProjects(): Project[] {
   const sessions = walkJsonl(CODEX_SESSIONS_DIR).map(sessionId => {
     const filePath = path.join(CODEX_SESSIONS_DIR, sessionId);
-    return getSessionMetaCached(sessionId, filePath, fs.statSync(filePath).mtimeMs);
+    return getSessionMetaCached(sessionId, filePath, fs.statSync(/* turbopackIgnore: true */ filePath).mtimeMs);
   });
 
   const byProject = new Map<string, SessionMeta[]>();
@@ -79,10 +79,10 @@ export function getCodexProjects(): Project[] {
 export function getCodexSession(projectId: string, sessionId: string): ConversationData | null {
   let filePath: string;
   try { filePath = getSessionFile(sessionId); } catch { return null; }
-  if (!fs.existsSync(filePath)) return null;
+  if (!fs.existsSync(/* turbopackIgnore: true */ filePath)) return null;
 
-  const mtimeMs = fs.statSync(filePath).mtimeMs;
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const mtimeMs = fs.statSync(/* turbopackIgnore: true */ filePath).mtimeMs;
+  const content = fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8');
   const session = parseCodexSessionMeta(sessionId, content, mtimeMs);
   if (projectId && session.projectId !== projectId) return null;
 

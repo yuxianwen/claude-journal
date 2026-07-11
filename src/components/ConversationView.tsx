@@ -1,28 +1,38 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConversationData, Message } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
+import { collectToolResults } from '@/lib/tool-results';
+import { conversationToMarkdown } from '@/lib/markdown-export';
+import { summarizeConversation } from '@/lib/session-summary';
 import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
+import SessionSummaryCard from './SessionSummaryCard';
+import SessionAnnotations from './SessionAnnotations';
 
-function titleKey(provider: string, projectId: string, sessionId: string) {
+function titleKey(sourceId: string, provider: string, projectId: string, sessionId: string) {
+  return `journal:title:v2:${encodeURIComponent(sourceId)}:${provider}:${encodeURIComponent(projectId)}:${encodeURIComponent(sessionId)}`;
+}
+
+function legacyTitleKey(provider: string, projectId: string, sessionId: string) {
   return `journal:title:${provider}:${projectId}/${sessionId}`;
 }
 
-function EditableTitle({ provider, projectId, sessionId, defaultTitle, editLabel }: { provider: string; projectId: string; sessionId: string; defaultTitle: string; editLabel: string }) {
+function EditableTitle({ sourceId, provider, projectId, sessionId, defaultTitle, editLabel }: { sourceId: string | null; provider: string; projectId: string; sessionId: string; defaultTitle: string; editLabel: string }) {
   const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(() => {
-    if (typeof window === 'undefined') return defaultTitle;
-    return localStorage.getItem(titleKey(provider, projectId, sessionId)) || defaultTitle;
+  const [customTitle, setCustomTitle] = useState<string | null>(() => {
+    if (typeof window === 'undefined' || !sourceId) return null;
+    const key = titleKey(sourceId, provider, projectId, sessionId);
+    const saved = localStorage.getItem(key);
+    if (saved) return saved;
+    const legacy = localStorage.getItem(legacyTitleKey(provider, projectId, sessionId));
+    if (legacy) localStorage.setItem(key, legacy);
+    return legacy;
   });
+  const title = customTitle || defaultTitle;
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(titleKey(provider, projectId, sessionId));
-    setTitle(saved || defaultTitle);
-  }, [provider, projectId, sessionId, defaultTitle]);
 
   useEffect(() => {
     if (editing) inputRef.current?.select();
@@ -30,11 +40,13 @@ function EditableTitle({ provider, projectId, sessionId, defaultTitle, editLabel
 
   const save = (val: string) => {
     const trimmed = val.trim() || defaultTitle;
-    setTitle(trimmed);
+    const key = sourceId ? titleKey(sourceId, provider, projectId, sessionId) : null;
     if (trimmed === defaultTitle) {
-      localStorage.removeItem(titleKey(provider, projectId, sessionId));
+      if (key) localStorage.removeItem(key);
+      setCustomTitle(null);
     } else {
-      localStorage.setItem(titleKey(provider, projectId, sessionId), trimmed);
+      if (key) localStorage.setItem(key, trimmed);
+      setCustomTitle(trimmed);
     }
     setEditing(false);
   };
@@ -85,22 +97,6 @@ function CopyButton({ text, label, copiedLabel }: { text: string; label: string;
       {copied ? copiedLabel : label}
     </button>
   );
-}
-
-function exportToMarkdown(data: ConversationData, userLabel: string, assistantName: string): string {
-  const lines: string[] = [`# ${data.session.title}`, '', `> ${new Date(data.session.startTime).toLocaleString()}`, ''];
-  for (const msg of data.messages) {
-    const role = msg.type === 'user' ? `**${userLabel}**` : `**${assistantName}**`;
-    lines.push(`## ${role}`);
-    lines.push('');
-    for (const block of msg.content) {
-      if (block.type === 'text') lines.push(block.text);
-      else if (block.type === 'tool_use') lines.push(`\`\`\`\n[${block.name}]\n${JSON.stringify(block.input, null, 2)}\n\`\`\``);
-      else if (block.type === 'thinking') lines.push(`> ${block.thinking.slice(0, 200)}...`);
-    }
-    lines.push('');
-  }
-  return lines.join('\n');
 }
 
 export interface MessageFilters {
@@ -179,19 +175,23 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
   const didRestoreRef = useRef(false);
   const followBottomRef = useRef(false);
 
-  const { getSessionData } = useFolderContext();
+  const { getSessionData, sourceId } = useFolderContext();
+  const toolResults = useMemo(
+    () => collectToolResults(data?.messages ?? []),
+    [data],
+  );
+  const sessionSummary = useMemo(
+    () => data ? summarizeConversation(data) : null,
+    [data],
+  );
 
   // Initial load (and full reload on session switch).
   useEffect(() => {
-    setLoading(true);
-    loadingRef.current = true;
-    setError('');
-    lastMtimeRef.current = undefined;
-    dataSigRef.current = '';
-    didRestoreRef.current = false;
+    let cancelled = false;
     getSessionData(projectId, sessionId)
       .then(d => {
-        if (!d || 'unchanged' in d) { setError(t('convNotFound')); setLoading(false); loadingRef.current = false; return; }
+        if (cancelled) return;
+        if (!d || 'unchanged' in d) { setError('not-found'); setLoading(false); loadingRef.current = false; return; }
         setData(d);
         dataSigRef.current = convSig(d);
         lastMtimeRef.current = d.mtimeMs;
@@ -199,11 +199,13 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
         loadingRef.current = false;
       })
       .catch(e => {
+        if (cancelled) return;
         setError(String(e));
         setLoading(false);
         loadingRef.current = false;
       });
-  }, [projectId, sessionId, getSessionData, t]);
+    return () => { cancelled = true; };
+  }, [projectId, sessionId, getSessionData]);
 
   // Auto-refresh the open conversation. The keyed message list means only new
   // bubbles mount — existing DOM is untouched (true partial refresh).
@@ -275,18 +277,21 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
     return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(saveTimer); };
   }, [data]);
 
+  const revealMessage = useCallback((messageId: string) => {
+    const element = scrollContainerRef.current?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedId(messageId);
+    setTimeout(() => setHighlightedId(null), 3000);
+  }, []);
+
   useEffect(() => {
     if (!data || !highlightMessageId) return;
     const timer = setTimeout(() => {
-      const el = scrollContainerRef.current?.querySelector(`[data-message-id="${highlightMessageId}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setHighlightedId(highlightMessageId);
-        setTimeout(() => setHighlightedId(null), 3000);
-      }
+      revealMessage(highlightMessageId);
     }, 100);
     return () => clearTimeout(timer);
-  }, [data, highlightMessageId]);
+  }, [data, highlightMessageId, revealMessage]);
 
   if (loading) {
     return (
@@ -299,7 +304,7 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
   if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-red-500 text-sm">{error || t('convNotFound')}</div>
+        <div className="text-red-500 text-sm">{error === 'not-found' ? t('convNotFound') : error || t('convNotFound')}</div>
       </div>
     );
   }
@@ -311,9 +316,9 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="px-6 py-3 border-b border-gray-800 flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <EditableTitle provider={data.session.provider} projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
+      <div className="px-4 sm:px-6 py-3 border-b border-gray-800 flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1 basis-64">
+          <EditableTitle key={sourceId ?? 'pending-source'} sourceId={sourceId} provider={data.session.provider} projectId={projectId} sessionId={sessionId} defaultTitle={data.session.title} editLabel={t('convEditTitle')} />
           <p className="text-xs text-gray-600 mt-0.5 truncate">{data.session.cwd}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
@@ -323,14 +328,25 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
           <FilterChip active={filters.userMessages} onToggle={() => onToggleFilter('userMessages')} icon="👤" label={t('filterUser')} />
           <FilterChip active={filters.assistantMessages} onToggle={() => onToggleFilter('assistantMessages')} icon="🤖" label={assistantName} />
         </div>
-        <CopyButton text={exportToMarkdown(data, t('msgUser'), assistantName)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
+        {sourceId && (
+          <SessionAnnotations
+            sourceId={sourceId}
+            provider={data.session.provider}
+            projectId={projectId}
+            sessionId={sessionId}
+          />
+        )}
+        <CopyButton text={conversationToMarkdown(data, t('msgUser'), assistantName)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
 
       {/* Stats */}
       <StatsBar session={data.session} totalMessages={visibleMessages.length} />
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6">
+        {sessionSummary && (
+          <SessionSummaryCard summary={sessionSummary} onReveal={revealMessage} />
+        )}
         {visibleMessages.map((msg, idx) => (
           <div
             key={msg.uuid || idx}
@@ -339,7 +355,7 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
           >
             <MessageBubble
               message={msg}
-              nextMessage={visibleMessages[idx + 1]}
+              toolResults={toolResults}
               filters={filters}
               assistantName={assistantName}
             />

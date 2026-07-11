@@ -201,6 +201,7 @@ export async function getSession(
           type: 'tool_result' as const,
           tool_use_id: String(c.tool_use_id || ''),
           content: c.content as string | ContentBlock[],
+          isError: Boolean(c.is_error),
         };
         if (c.type === 'image') return {
           type: 'image' as const,

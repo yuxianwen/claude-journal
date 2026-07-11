@@ -5,16 +5,16 @@
   "homepage": "https://claude-journa.yuxianwen.dpdns.org",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/stamp-sw.js",
+    "prebuild": "node scripts/stamp-sw.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@shikijs/rehype": "^4.0.2",
     "@tailwindcss/typography": "^0.5.19",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
     "html-to-image": "^1.11.13",
     "next": "16.2.4",
     "react": "19.2.4",
@@ -31,7 +31,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "fake-indexeddb": "^6.2.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

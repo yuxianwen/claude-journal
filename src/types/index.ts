@@ -34,7 +34,7 @@ export type ContentBlockType =
   | { type: 'text'; text: string }
   | { type: 'thinking'; thinking: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; tool_use_id: string; content: string | ContentBlock[] }
+  | { type: 'tool_result'; tool_use_id: string; content: string | ContentBlock[]; isError?: boolean }
   | { type: 'image'; source: { type: string; url?: string; media_type?: string; data?: string } }
 
 export type ContentBlock = ContentBlockType;

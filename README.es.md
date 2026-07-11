@@ -13,18 +13,18 @@ Aplicación web local para explorar y revisar el historial de conversaciones de 
 - **Renderizado de conversaciones** — Markdown completo, bloques de código con resaltado de sintaxis (Shiki), tablas GFM y listas de tareas
 - **Visualización de llamadas a herramientas** — Muestra cada llamada a herramienta que Claude realizó (Bash, lectura/escritura de archivos, etc.) y su resultado
 - **Bloques de pensamiento** — Visualización plegable del proceso de razonamiento de Claude
-- **Estadísticas de tokens** — Conteo de tokens de entrada / salida / caché y costo estimado por sesión
-- **Búsqueda de texto completo** — `⌘K` para buscar en todas las sesiones al instante
+- **Estadísticas de tokens** — Conteo de tokens de entrada / salida / caché por sesión
+- **Búsqueda de texto completo** — `⌘K` busca en un índice local que solo reconstruye las sesiones modificadas
 - **Exportar a Markdown / Imagen** — Copia cualquier mensaje como Markdown o captura de pantalla con un clic
 - **Selector de tema** — Tema claro, oscuro o del sistema con preferencia persistente
 - **Interfaz en 11 idiomas** — Detecta automáticamente el idioma del navegador; cambia en cualquier momento desde el selector
-- **Imágenes en línea** — Las imágenes incrustadas en mensajes (base64 o URL) se muestran directamente; haz clic para ampliar
+- **Imágenes privadas** — Las imágenes incrustadas se muestran localmente; las URL externas solo se cargan tras tu confirmación
 - **Lightbox de imágenes** — Superposición a pantalla completa con desenfoque de fondo; cierra con `Esc` o clic fuera
 - **Visualización de comandos slash** — Los mensajes `/comando` se muestran como chips con estilo en lugar de XML sin procesar
 - **Salida de comandos locales** — Los bloques de salida de shell se muestran en estilo terminal; los avisos detallados son plegables
 - **Barra de filtros persistente** — Los ajustes de filtro (pensamiento, herramientas, mensajes usuario/Claude) se mantienen al cambiar de sesión
 - **Memoria de sesión** — La última sesión visitada se restaura al recargar mediante parámetros URL
-- **URLs compartibles** — Copia la URL para compartir o marcar la sesión y posición de scroll exactas (`?p=&s=&scroll=`)
+- **URLs de marcador** — Copia la URL para volver a abrir la sesión y la posición de desplazamiento exactas en el mismo navegador y equipo (`?p=&s=&scroll=`). La URL no contiene datos de la sesión ni da acceso a los archivos locales.
 - **Volver arriba** — Aparece un botón flotante al bajar mucho; un clic vuelve al principio
 - **PWA** — Instala en tu escritorio o pantalla de inicio; se actualiza silenciosamente al desplegar una nueva versión
 

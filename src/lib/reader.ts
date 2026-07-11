@@ -5,9 +5,9 @@ import { Project, SessionMeta, TokenUsage, Message, ContentBlock, ConversationDa
 
 function getProjectsDir(): string {
   if (process.platform === 'win32') {
-    return path.join(os.homedir(), 'AppData', 'Roaming', 'Claude', 'projects');
+    return path.join(/* turbopackIgnore: true */ os.homedir(), 'AppData', 'Roaming', 'Claude', 'projects');
   }
-  return path.join(os.homedir(), '.claude', 'projects');
+  return path.join(/* turbopackIgnore: true */ os.homedir(), '.claude', 'projects');
 }
 
 const PROJECTS_DIR = getProjectsDir();
@@ -40,14 +40,14 @@ function getSessionMetaCached(filePath: string, mtimeMs: number): SessionMeta {
 export function getSessionMtime(projectId: string, sessionId: string): number | null {
   const filePath = path.join(PROJECTS_DIR, projectId, `${sessionId}.jsonl`);
   try {
-    return fs.statSync(filePath).mtimeMs;
+    return fs.statSync(/* turbopackIgnore: true */ filePath).mtimeMs;
   } catch {
     return null;
   }
 }
 
 function parseSessionFile(filePath: string): SessionMeta {
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const content = fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8');
   const lines = content.split('\n').filter(Boolean).map(line => {
     try { return JSON.parse(line); } catch { return null; }
   }).filter(Boolean);
@@ -141,23 +141,23 @@ function parseSessionFile(filePath: string): SessionMeta {
 }
 
 export function getAllProjects(): Project[] {
-  if (!fs.existsSync(PROJECTS_DIR)) return [];
+  if (!fs.existsSync(/* turbopackIgnore: true */ PROJECTS_DIR)) return [];
 
-  const projectDirs = fs.readdirSync(PROJECTS_DIR).filter(name => {
-    return fs.statSync(path.join(PROJECTS_DIR, name)).isDirectory();
+  const projectDirs = fs.readdirSync(/* turbopackIgnore: true */ PROJECTS_DIR).filter(name => {
+    return fs.statSync(/* turbopackIgnore: true */ path.join(PROJECTS_DIR, name)).isDirectory();
   });
 
   const projects: Project[] = [];
 
   for (const dirName of projectDirs) {
     const dirPath = path.join(PROJECTS_DIR, dirName);
-    const sessionFiles = fs.readdirSync(dirPath).filter(f => f.endsWith('.jsonl'));
+    const sessionFiles = fs.readdirSync(/* turbopackIgnore: true */ dirPath).filter(f => f.endsWith('.jsonl'));
 
     if (sessionFiles.length === 0) continue;
 
     const sessions: SessionMeta[] = sessionFiles.map(f => {
       const fp = path.join(dirPath, f);
-      return getSessionMetaCached(fp, fs.statSync(fp).mtimeMs);
+      return getSessionMetaCached(fp, fs.statSync(/* turbopackIgnore: true */ fp).mtimeMs);
     }).sort((a, b) => b.endTime.localeCompare(a.endTime));
 
     const cwd = sessions[0]?.cwd || dirName.replace(/^-/, '/').replace(/-/g, '/');
@@ -180,10 +180,10 @@ export function getAllProjects(): Project[] {
 
 export function getSession(projectId: string, sessionId: string): ConversationData | null {
   const filePath = path.join(PROJECTS_DIR, projectId, `${sessionId}.jsonl`);
-  if (!fs.existsSync(filePath)) return null;
+  if (!fs.existsSync(/* turbopackIgnore: true */ filePath)) return null;
 
-  const mtimeMs = fs.statSync(filePath).mtimeMs;
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const mtimeMs = fs.statSync(/* turbopackIgnore: true */ filePath).mtimeMs;
+  const content = fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8');
   const lines = content.split('\n').filter(Boolean).map(line => {
     try { return JSON.parse(line); } catch { return null; }
   }).filter(Boolean);
@@ -216,6 +216,7 @@ export function getSession(projectId: string, sessionId: string): ConversationDa
           type: 'tool_result' as const,
           tool_use_id: String(c.tool_use_id || ''),
           content: c.content as string | ContentBlock[],
+          isError: Boolean(c.is_error),
         };
         if (c.type === 'image') return {
           type: 'image' as const,
@@ -270,7 +271,7 @@ export function searchSessions(query: string): Array<{ session: SessionMeta; pro
   for (const project of projects) {
     for (const session of project.sessions) {
       const filePath = path.join(PROJECTS_DIR, project.id, `${session.id}.jsonl`);
-      const rawContent = fs.readFileSync(filePath, 'utf-8');
+      const rawContent = fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8');
       const lines = rawContent.split('\n').filter(Boolean);
 
       for (const rawLine of lines) {

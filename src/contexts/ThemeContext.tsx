@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -23,40 +23,26 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function subscribeToSystemTheme(onStoreChange: () => void) {
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     const saved = (localStorage.getItem('claude-journal-theme') as Theme) || 'system';
     return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
   });
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    const saved = (localStorage.getItem('claude-journal-theme') as Theme) || 'system';
-    const theme = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
-    return theme === 'system' ? getSystemTheme() : theme;
-  });
+  const systemTheme = useSyncExternalStore(subscribeToSystemTheme, getSystemTheme, () => 'dark' as const);
+  const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
   useEffect(() => {
-    const resolved = theme === 'system' ? getSystemTheme() : theme;
-    setResolvedTheme(resolved);
     const root = document.documentElement;
-    root.classList.toggle('dark', resolved === 'dark');
-    root.classList.toggle('light', resolved === 'light');
-  }, [theme]);
-
-  // Listen for system theme changes when theme === 'system'
-  useEffect(() => {
-    if (theme !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
-      const resolved = mq.matches ? 'dark' : 'light';
-      setResolvedTheme(resolved);
-      document.documentElement.classList.toggle('dark', resolved === 'dark');
-      document.documentElement.classList.toggle('light', resolved === 'light');
-    };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [theme]);
+    root.classList.toggle('dark', resolvedTheme === 'dark');
+    root.classList.toggle('light', resolvedTheme === 'light');
+  }, [resolvedTheme]);
 
   const setTheme = useCallback((t: Theme) => {
     localStorage.setItem('claude-journal-theme', t);

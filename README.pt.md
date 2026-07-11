@@ -13,18 +13,18 @@ Aplicativo web local para navegar e revisar o histórico de conversas do Claude 
 - **Renderização de conversas** — Markdown completo, blocos de código com destaque de sintaxe (Shiki), tabelas GFM e listas de tarefas
 - **Visualização de chamadas de ferramentas** — Mostra cada chamada de ferramenta feita pelo Claude (Bash, leitura/escrita de arquivos, etc.) e seu resultado
 - **Blocos de pensamento** — Exibição recolhível do processo de raciocínio do Claude
-- **Estatísticas de tokens** — Contagem de tokens de entrada / saída / cache e custo estimado por sessão
-- **Pesquisa de texto completo** — `⌘K` para pesquisar em todas as sessões instantaneamente
+- **Estatísticas de tokens** — Contagem de tokens de entrada / saída / cache por sessão
+- **Pesquisa de texto completo** — `⌘K` consulta um índice local que reconstrói apenas sessões alteradas
 - **Exportar para Markdown / Imagem** — Copie qualquer mensagem como Markdown ou captura de tela com um clique
 - **Seletor de tema** — Tema claro, escuro ou do sistema com preferência persistente
 - **Interface em 11 idiomas** — Detecta automaticamente o idioma do navegador; troca a qualquer momento pelo seletor
-- **Imagens em linha** — Imagens incorporadas em mensagens (base64 ou URL) são renderizadas diretamente; clique para ampliar
+- **Imagens privadas** — Imagens incorporadas são exibidas localmente; URLs externas só carregam após confirmação
 - **Lightbox de imagens** — Sobreposição em tela cheia com desfoque de fundo; feche com `Esc` ou clicando fora
 - **Exibição de comandos slash** — Mensagens `/comando` são exibidas como chips estilizados em vez de XML bruto
 - **Saída de comandos locais** — Blocos de saída de shell exibidos em estilo de terminal; avisos detalhados são recolhíveis
 - **Barra de filtros persistente** — Configurações de filtro (pensamento, ferramentas, mensagens usuário/Claude) mantidas ao trocar de sessão
 - **Memória de sessão** — A última sessão visitada é restaurada ao recarregar via parâmetros URL
-- **URLs compartilháveis** — Copie a URL para compartilhar ou favoritar a sessão e posição de rolagem exatas (`?p=&s=&scroll=`)
+- **URLs de favorito** — Copie a URL para reabrir a sessão e a posição de rolagem exatas no mesmo navegador e computador (`?p=&s=&scroll=`). A URL não contém dados da sessão nem concede acesso aos arquivos locais.
 - **Voltar ao topo** — Botão flutuante aparece ao rolar muito para baixo; um clique volta ao início
 - **PWA** — Instale na área de trabalho ou tela inicial; atualizações silenciosas automáticas ao implantar nova versão
 

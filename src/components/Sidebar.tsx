@@ -6,6 +6,11 @@ import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import LangSwitcher from './LangSwitcher';
 import ThemeSwitcher from './ThemeSwitcher';
+import {
+  ANNOTATIONS_CHANGE_EVENT,
+  listSessionAnnotations,
+  makeSessionKey,
+} from '@/lib/annotations';
 
 const YESTERDAY: Record<string, string> = {
   'zh-CN': '昨天', ja: '昨日', ko: '어제',
@@ -66,10 +71,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ projects, selectedProjectId, selectedSessionId, onSelectSession, onToggle }: SidebarProps) {
-  const { changeFolder, reload, provider, setProvider } = useFolderContext();
+  const { changeFolder, reload, provider, setProvider, sourceId } = useFolderContext();
   const { t, locale } = useI18n();
   const [reloading, setReloading] = useState(false);
   const [filter, setFilter] = useState('');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [favoriteSessionKeys, setFavoriteSessionKeys] = useState<Set<string>>(new Set());
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => {
     const initial = new Set(projects.slice(0, 3).map(p => p.id));
     if (selectedProjectId) initial.add(selectedProjectId);
@@ -82,6 +89,32 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
     selectedItemRef.current?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   }, [selectedProjectId, selectedSessionId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const refreshFavorites = async () => {
+      if (!sourceId) {
+        if (!cancelled) setFavoriteSessionKeys(new Set());
+        return;
+      }
+      try {
+        const annotations = await listSessionAnnotations();
+        if (!cancelled) {
+          setFavoriteSessionKeys(new Set(
+            annotations.filter(annotation => annotation.favorite).map(annotation => annotation.sessionKey),
+          ));
+        }
+      } catch {
+        if (!cancelled) setFavoriteSessionKeys(new Set());
+      }
+    };
+    void Promise.resolve().then(refreshFavorites);
+    window.addEventListener(ANNOTATIONS_CHANGE_EVENT, refreshFavorites);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(ANNOTATIONS_CHANGE_EVENT, refreshFavorites);
+    };
+  }, [provider, sourceId]);
+
   const handleReload = async () => {
     setReloading(true);
     await reload();
@@ -91,7 +124,8 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
   const toggleProject = (id: string) => {
     setExpandedProjects(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -99,18 +133,22 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
   const totalSessions = projects.reduce((a, p) => a + p.sessions.length, 0);
 
   const keyword = filter.trim().toLowerCase();
-  const filteredProjects = keyword
-    ? projects
-        .map(p => ({
-          ...p,
-          sessions: p.sessions.filter(s =>
-            s.title?.toLowerCase().includes(keyword) || p.name.toLowerCase().includes(keyword)
-          ),
-        }))
-        .filter(p => p.sessions.length > 0)
+  const filteredProjects = keyword || favoritesOnly
+    ? projects.map(project => ({
+        ...project,
+        sessions: project.sessions.filter(session => {
+          const matchesKeyword = !keyword
+            || session.title?.toLowerCase().includes(keyword)
+            || project.name.toLowerCase().includes(keyword);
+          const matchesFavorite = !favoritesOnly || Boolean(
+            sourceId && favoriteSessionKeys.has(makeSessionKey(sourceId, provider, project.id, session.id)),
+          );
+          return matchesKeyword && matchesFavorite;
+        }),
+      })).filter(project => project.sessions.length > 0)
     : projects;
 
-  const visibleExpanded = keyword
+  const visibleExpanded = keyword || favoritesOnly
     ? new Set(filteredProjects.map(p => p.id))
     : expandedProjects;
 
@@ -124,7 +162,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
               value={provider}
               onChange={e => setProvider(e.target.value as Provider)}
               className="bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-gray-300 outline-none"
-              title="Data source"
+              title={t('pickerDataSource')}
             >
               <option value="claude">Claude</option>
               <option value="codex">Codex</option>
@@ -152,7 +190,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
             </button>
             <button
               onClick={onToggle}
-              title="Collapse sidebar (⌘\)"
+              title={`${t('sidebarClose')} (⌘\\)`}
               className="text-gray-600 hover:text-gray-400 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -162,14 +200,15 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
           </div>
         </div>
         <p className="text-xs text-gray-500 mt-0.5">
-          {keyword
+          {keyword || favoritesOnly
             ? `${filteredProjects.length} / ${projects.length} projects · ${filteredProjects.reduce((a, p) => a + p.sessions.length, 0)} sessions`
             : `${t('sidebarProjects', { n: projects.length })} · ${t('sidebarSessions', { n: totalSessions })}`}
         </p>
       </div>
 
       <div className="px-3 py-2 border-b border-gray-800">
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -177,7 +216,7 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
             type="text"
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            placeholder="Filter projects / sessions…"
+            placeholder={t('sidebarFilterPlaceholder')}
             className="w-full bg-gray-800 text-xs text-gray-300 placeholder-gray-600 rounded-md pl-8 pr-7 py-1.5 outline-none focus:ring-1 focus:ring-blue-500/60"
           />
           {filter && (
@@ -190,6 +229,21 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
               </svg>
             </button>
           )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setFavoritesOnly(value => !value)}
+            disabled={!sourceId}
+            title={t('sidebarFavorites')}
+            aria-pressed={favoritesOnly}
+            className={`w-7 h-7 rounded-md border text-xs transition-colors disabled:opacity-40 ${
+              favoritesOnly
+                ? 'border-amber-600/60 bg-amber-950/40 text-amber-400'
+                : 'border-gray-700 text-gray-600 hover:text-amber-400'
+            }`}
+          >
+            ★
+          </button>
         </div>
       </div>
 
@@ -216,6 +270,9 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
               <div className="bg-gray-950">
                 {project.sessions.map((session: SessionMeta) => {
                   const isSelected = selectedProjectId === project.id && selectedSessionId === session.id;
+                  const isFavorite = Boolean(
+                    sourceId && favoriteSessionKeys.has(makeSessionKey(sourceId, provider, project.id, session.id)),
+                  );
                   return (
                     <button
                       key={session.id}
@@ -224,9 +281,10 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
                       className={`w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-200/70 dark:hover:bg-gray-800/60 transition-colors text-left ${isSelected ? 'bg-blue-950/60 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs leading-tight truncate ${isSelected ? 'text-blue-300' : 'text-gray-400'}`}>
-                          {session.title || session.id.slice(0, 8)}
-                        </p>
+                        <div className={`flex items-center gap-1 text-xs leading-tight ${isSelected ? 'text-blue-300' : 'text-gray-400'}`}>
+                          <span className="truncate flex-1">{session.title || session.id.slice(0, 8)}</span>
+                          {isFavorite && <span className="text-amber-400 flex-shrink-0" aria-hidden="true">★</span>}
+                        </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-gray-600">{formatDate(session.endTime, locale)}</span>
                           {session.tokenUsage.outputTokens > 0 && (

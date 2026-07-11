@@ -1,10 +1,11 @@
 // Cache name is stamped with a build version at deploy time (scripts/stamp-sw.js).
 // Changing the name on each deploy ensures browsers detect a new SW and bust stale caches.
-const CACHE = 'claude-journal-1783568607500';
+const CACHE = 'ai-journal-1783702494694';
 
 const PRECACHE = [
   '/',
   '/manifest.json',
+  '/icon.svg',
   '/icon-192x192.png',
   '/icon-512x512.png',
 ];

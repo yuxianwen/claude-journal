@@ -1,12 +1,18 @@
 {
-  "name": "Claude Journal",
-  "short_name": "CJ",
-  "description": "Claude Code 对话记录浏览器",
+  "name": "AI Journal",
+  "short_name": "AJ",
+  "description": "Private Claude Code and Codex conversation history browser",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192x192.png",
       "sizes": "192x192",

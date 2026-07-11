@@ -13,18 +13,18 @@ Application web locale pour parcourir et revoir l'historique de vos conversation
 - **Rendu des conversations** — Markdown complet, blocs de code avec coloration syntaxique (Shiki), tableaux GFM et listes de tâches
 - **Visualisation des appels d'outils** — Affiche chaque appel d'outil effectué par Claude (Bash, lecture/écriture de fichiers, etc.) et son résultat
 - **Blocs de réflexion** — Affichage repliable du processus de raisonnement de Claude
-- **Statistiques de tokens** — Nombre de tokens en entrée / sortie / cache et coût estimé par session
-- **Recherche plein texte** — `⌘K` pour rechercher dans toutes les sessions instantanément
+- **Statistiques de tokens** — Nombre de tokens en entrée / sortie / cache par session
+- **Recherche plein texte** — `⌘K` interroge un index local qui ne reconstruit que les sessions modifiées
 - **Exporter en Markdown / Image** — Copiez n'importe quel message en Markdown ou en capture d'écran en un clic
 - **Sélecteur de thème** — Thème clair, sombre ou système avec préférence persistante
 - **Interface en 11 langues** — Détecte automatiquement la langue du navigateur ; changement à tout moment via le sélecteur
-- **Images en ligne** — Les images intégrées dans les messages (base64 ou URL) s'affichent directement ; cliquez pour agrandir
+- **Images privées** — Les images intégrées s'affichent localement ; les URL externes ne sont chargées qu'après confirmation
 - **Visionneuse d'images** — Superposition plein écran avec flou d'arrière-plan ; fermeture par `Esc` ou clic à l'extérieur
 - **Affichage des commandes slash** — Les messages `/commande` s'affichent sous forme de chips stylisés plutôt qu'en XML brut
 - **Sortie des commandes locales** — Les blocs de sortie shell s'affichent en style terminal ; les avertissements détaillés sont réductibles
 - **Barre de filtres persistante** — Les paramètres de filtre (pensée, outils, messages utilisateur/Claude) persistent lors des changements de session
 - **Mémoire de session** — La dernière session consultée est restaurée au rechargement via les paramètres URL
-- **URLs partageables** — Copiez l'URL pour partager ou mémoriser la session et la position de défilement exactes (`?p=&s=&scroll=`)
+- **URLs de signet** — Copiez l'URL pour rouvrir la session et la position de défilement exactes sur le même navigateur et la même machine (`?p=&s=&scroll=`). L'URL ne contient aucune donnée de session et ne donne pas accès aux fichiers locaux.
 - **Retour en haut** — Un bouton flottant apparaît en bas de page ; un clic remonte en haut
 - **PWA** — Installez sur votre bureau ou écran d'accueil ; mises à jour silencieuses automatiques lors d'un nouveau déploiement
 

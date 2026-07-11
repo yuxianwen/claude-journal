@@ -1,17 +1,37 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useSyncExternalStore } from 'react';
 import { Project, ConversationData, Provider } from '@/types';
 import {
   getAllProjects,
   getCodexAllProjects,
   getCodexSession,
   getSession,
-  searchCodexSessions,
-  searchSessions,
-  SearchResult,
 } from '@/lib/fs-reader';
-import { saveHandle, loadHandle, clearHandle } from '@/lib/folder-store';
+import {
+  clearHandle,
+  generateSourceId,
+  loadHandle,
+  LOCAL_SOURCE_ID,
+  saveHandle,
+} from '@/lib/folder-store';
+import {
+  querySearchIndex,
+  updateSearchIndex,
+} from '@/lib/search-index';
+import type { SearchResult, SearchSessionLoader } from '@/lib/search-index';
+
+type FolderIssue = 'empty' | 'permission' | 'read' | null;
+
+const subscribeToDirectoryPickerSupport = () => () => {};
+
+function getDirectoryPickerSupportSnapshot() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
+function getDirectoryPickerSupportServerSnapshot() {
+  return false;
+}
 
 function isLocalEnv() {
   if (typeof window === 'undefined') return false;
@@ -23,10 +43,13 @@ interface FolderContextType {
   projects: Project[];
   loading: boolean;
   error: string;
+  folderIssue: FolderIssue;
   hasFolder: boolean;
   isLocal: boolean;
+  supportsDirectoryPicker: boolean;
   provider: Provider;
   assistantName: string;
+  sourceId: string | null;
   setProvider: (provider: Provider) => void;
   pickFolder: () => Promise<void>;
   changeFolder: () => Promise<void>;
@@ -51,17 +74,31 @@ export function useFolderContext() {
 
 export function FolderProvider({ children }: { children: React.ReactNode }) {
   const handleRef = useRef<FileSystemDirectoryHandle | null>(null);
+  const folderOperationRef = useRef(0);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [folderIssue, setFolderIssue] = useState<FolderIssue>(null);
   const [hasFolder, setHasFolder] = useState(false);
   const [isLocal] = useState(isLocalEnv);
+  const supportsDirectoryPicker = useSyncExternalStore(
+    subscribeToDirectoryPickerSupport,
+    getDirectoryPickerSupportSnapshot,
+    getDirectoryPickerSupportServerSnapshot,
+  );
   const [provider, setProviderState] = useState<Provider>(() => {
     if (typeof window === 'undefined') return 'claude';
     if (new URLSearchParams(window.location.search).get('provider') === 'codex') return 'codex';
     return localStorage.getItem('claude-journal-provider') === 'codex' ? 'codex' : 'claude';
   });
+  const providerRef = useRef(provider);
+  const [sourceId, setSourceId] = useState<string | null>(null);
+  const sourceIdRef = useRef(sourceId);
   const assistantName = provider === 'codex' ? 'Codex' : 'Claude';
+
+  const isCurrentFolderOperation = useCallback((operationId: number, targetProvider: Provider) => (
+    folderOperationRef.current === operationId && providerRef.current === targetProvider
+  ), []);
 
   // Skip a state update when a refresh produced an identical project list, so
   // periodic polling doesn't trigger needless sidebar re-renders.
@@ -75,74 +112,123 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
 
   // ── Local dev: load via API routes ─────────────────────────────────────────
 
-  const loadFromApi = useCallback(async () => {
+  const loadFromApi = useCallback(async (targetProvider: Provider) => {
+    const operationId = ++folderOperationRef.current;
     setLoading(true);
     setError('');
+    setFolderIssue(null);
+    sourceIdRef.current = LOCAL_SOURCE_ID;
+    setSourceId(LOCAL_SOURCE_ID);
     try {
-      const res = await fetch(`/api/projects?provider=${provider}`);
+      const res = await fetch(`/api/projects?provider=${targetProvider}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return;
       applyProjects(data);
       setHasFolder(true);
     } catch (e) {
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return;
       setError(String(e));
     } finally {
-      setLoading(false);
+      if (isCurrentFolderOperation(operationId, targetProvider)) setLoading(false);
     }
-  }, [applyProjects, provider]);
+  }, [applyProjects, isCurrentFolderOperation]);
 
   // ── Remote: load via File System Access API ────────────────────────────────
 
-  const loadFromHandle = useCallback(async (handle: FileSystemDirectoryHandle, targetProvider: Provider = provider) => {
+  const loadFromHandle = useCallback(async (
+    handle: FileSystemDirectoryHandle,
+    targetProvider: Provider,
+    operationId = ++folderOperationRef.current,
+  ): Promise<boolean> => {
+    if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
     setLoading(true);
     setError('');
+    setFolderIssue(null);
     try {
       const data = targetProvider === 'codex'
         ? await getCodexAllProjects(handle)
         : await getAllProjects(handle);
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
+      if (data.length === 0) {
+        applyProjects([]);
+        setHasFolder(false);
+        sourceIdRef.current = null;
+        setSourceId(null);
+        setFolderIssue('empty');
+        return false;
+      }
       applyProjects(data);
       setHasFolder(true);
-    } catch (e) {
-      setError(String(e));
+      return true;
+    } catch {
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
+      setFolderIssue('read');
+      setHasFolder(false);
+      sourceIdRef.current = null;
+      setSourceId(null);
+      handleRef.current = null;
+      return false;
     } finally {
-      setLoading(false);
+      if (isCurrentFolderOperation(operationId, targetProvider)) setLoading(false);
     }
-  }, [applyProjects, provider]);
+  }, [applyProjects, isCurrentFolderOperation]);
 
   const resetProjectState = useCallback(() => {
     projectsSigRef.current = '';
     setProjects([]);
     setHasFolder(false);
+    setError('');
+    setFolderIssue(null);
     handleRef.current = null;
   }, []);
 
   const loadSavedRemoteHandle = useCallback(async (targetProvider: Provider) => {
+    const operationId = ++folderOperationRef.current;
+    setLoading(true);
+    sourceIdRef.current = null;
+    setSourceId(null);
     const saved = await loadHandle(targetProvider);
+    if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
     if (!saved) {
       setLoading(false);
       return false;
     }
 
     try {
-      const perm = await saved.queryPermission({ mode: 'read' });
+      const perm = await saved.handle.queryPermission({ mode: 'read' });
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
       if (perm === 'granted') {
-        handleRef.current = saved;
-        await loadFromHandle(saved, targetProvider);
-        return true;
+        const loaded = await loadFromHandle(saved.handle, targetProvider, operationId);
+        if (loaded) {
+          handleRef.current = saved.handle;
+          sourceIdRef.current = saved.sourceId;
+          setSourceId(saved.sourceId);
+        } else if (isCurrentFolderOperation(operationId, targetProvider)) {
+          await clearHandle(targetProvider);
+        }
+        return loaded;
       }
-      const req = await saved.requestPermission({ mode: 'read' });
+      const req = await saved.handle.requestPermission({ mode: 'read' });
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
       if (req === 'granted') {
-        handleRef.current = saved;
-        await loadFromHandle(saved, targetProvider);
-        return true;
+        const loaded = await loadFromHandle(saved.handle, targetProvider, operationId);
+        if (loaded) {
+          handleRef.current = saved.handle;
+          sourceIdRef.current = saved.sourceId;
+          setSourceId(saved.sourceId);
+        } else if (isCurrentFolderOperation(operationId, targetProvider)) {
+          await clearHandle(targetProvider);
+        }
+        return loaded;
       }
     } catch {
-      // no user gesture available, fall through to show picker
+      // A saved handle may require a new user gesture; show the picker instead.
     }
 
-    setLoading(false);
+    if (isCurrentFolderOperation(operationId, targetProvider)) setLoading(false);
     return false;
-  }, [loadFromHandle]);
+  }, [isCurrentFolderOperation, loadFromHandle]);
 
   // ── Silent refresh (polling): update the project list without the loading
   //    flicker, and skip entirely while the tab is hidden. ──────────────────
@@ -166,54 +252,96 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   // ── Init ───────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (isLocal) {
-      loadFromApi();
-      return;
-    }
-
-    async function initRemote() {
-      await loadSavedRemoteHandle(provider);
-    }
-    initRemote();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      if (isLocal) {
+        void loadFromApi(provider);
+      } else {
+        void loadSavedRemoteHandle(provider);
+      }
+    });
+    return () => {
+      cancelled = true;
+      folderOperationRef.current += 1;
+    };
   }, [isLocal, loadFromApi, loadSavedRemoteHandle, provider]);
 
   const setProvider = useCallback((next: Provider) => {
     if (next === provider) return;
     localStorage.setItem('claude-journal-provider', next);
+    providerRef.current = next;
+    folderOperationRef.current += 1;
     resetProjectState();
+    const nextSourceId = isLocal ? LOCAL_SOURCE_ID : null;
+    sourceIdRef.current = nextSourceId;
+    setSourceId(nextSourceId);
+    setLoading(true);
     setProviderState(next);
-    if (!isLocal) {
-      setLoading(true);
-      void loadSavedRemoteHandle(next);
-    }
-  }, [isLocal, loadSavedRemoteHandle, provider, resetProjectState]);
+  }, [isLocal, provider, resetProjectState]);
 
   // ── Folder picker (remote only) ────────────────────────────────────────────
 
   const pickFolder = useCallback(async () => {
     if (isLocal) return;
+    if (!window.showDirectoryPicker) {
+      setError('');
+      setFolderIssue(null);
+      return;
+    }
+    const targetProvider = providerRef.current;
+    const operationId = ++folderOperationRef.current;
+    const previousHandle = handleRef.current;
+    const previousSourceId = sourceIdRef.current;
+    const previousProjects = projects;
+    const previouslyHadFolder = hasFolder;
     try {
       const handle = await window.showDirectoryPicker({ mode: 'read' });
-      handleRef.current = handle;
-      await saveHandle(handle, provider);
-      await loadFromHandle(handle);
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return;
+      const loaded = await loadFromHandle(handle, targetProvider, operationId);
+      if (loaded) {
+        const isSameSource = Boolean(
+          previousHandle && previousSourceId
+          && typeof previousHandle.isSameEntry === 'function'
+          && await previousHandle.isSameEntry(handle).catch(() => false),
+        );
+        const nextSourceId = isSameSource ? previousSourceId! : generateSourceId();
+        handleRef.current = handle;
+        sourceIdRef.current = nextSourceId;
+        setSourceId(nextSourceId);
+        try {
+          await saveHandle(handle, targetProvider, nextSourceId);
+        } catch {
+          // The selected folder remains usable for this tab even if IndexedDB
+          // cannot persist it for the next visit.
+        }
+      } else if (previouslyHadFolder && previousHandle && previousSourceId) {
+        handleRef.current = previousHandle;
+        sourceIdRef.current = previousSourceId;
+        setSourceId(previousSourceId);
+        applyProjects(previousProjects);
+        setHasFolder(true);
+        setFolderIssue(null);
+      }
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setError(String(e));
+      if ((e as Error).name === 'AbortError') return;
+      if (!isCurrentFolderOperation(operationId, targetProvider)) return;
+      setError('');
+      setFolderIssue((e as Error).name === 'NotAllowedError' ? 'permission' : 'read');
     }
-  }, [isLocal, loadFromHandle, provider]);
+  }, [applyProjects, hasFolder, isCurrentFolderOperation, isLocal, loadFromHandle, projects]);
 
   const changeFolder = useCallback(async () => {
     if (isLocal) return;
-    await clearHandle(provider);
-    resetProjectState();
     await pickFolder();
-  }, [isLocal, pickFolder, provider, resetProjectState]);
+  }, [isLocal, pickFolder]);
 
   const reload = useCallback(async () => {
+    const targetProvider = providerRef.current;
     if (isLocal) {
-      await loadFromApi();
+      await loadFromApi(targetProvider);
     } else if (handleRef.current) {
-      await loadFromHandle(handleRef.current);
+      await loadFromHandle(handleRef.current, targetProvider);
     }
   }, [isLocal, loadFromApi, loadFromHandle]);
 
@@ -247,19 +375,55 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   }, [isLocal, provider]);
 
   const search = useCallback(async (query: string) => {
-    if (isLocal) {
-      const res = await fetch(`/api/search?provider=${provider}&q=${encodeURIComponent(query)}`);
-      if (!res.ok) return [];
-      return res.json();
+    if (!query.trim() || !sourceId) return [];
+
+    const operationId = folderOperationRef.current;
+    const targetProvider = providerRef.current;
+    const targetSourceId = sourceId;
+    const targetHandle = handleRef.current;
+    const targetProjects = projects;
+    const isCurrentSearch = () => (
+      folderOperationRef.current === operationId
+      && providerRef.current === targetProvider
+      && sourceIdRef.current === targetSourceId
+      && (isLocal || handleRef.current === targetHandle)
+    );
+
+    const loadSession: SearchSessionLoader = async (projectId, sessionId) => {
+      if (!isCurrentSearch()) return null;
+      if (isLocal) {
+        const params = new URLSearchParams({
+          projectId,
+          sessionId,
+          provider: targetProvider,
+        });
+        const res = await fetch(`/api/sessions?${params.toString()}`);
+        if (!res.ok || !isCurrentSearch()) return null;
+        return res.json();
+      }
+      if (!targetHandle) return null;
+      return targetProvider === 'codex'
+        ? getCodexSession(targetHandle, projectId, sessionId)
+        : getSession(targetHandle, projectId, sessionId);
+    };
+
+    try {
+      const update = await updateSearchIndex({
+        sourceId: targetSourceId,
+        provider: targetProvider,
+        projects: targetProjects,
+        loadSession,
+        isCurrent: isCurrentSearch,
+      });
+      if (update.cancelled || !isCurrentSearch()) return [];
+      return await querySearchIndex(targetSourceId, targetProvider, query);
+    } catch {
+      return [];
     }
-    if (!handleRef.current) return [];
-    return provider === 'codex'
-      ? searchCodexSessions(handleRef.current, query)
-      : searchSessions(handleRef.current, query);
-  }, [isLocal, provider]);
+  }, [isLocal, projects, sourceId]);
 
   return (
-    <FolderContext.Provider value={{ projects, loading, error, hasFolder, isLocal, provider, assistantName, setProvider, pickFolder, changeFolder, reload, getSessionData, search }}>
+    <FolderContext.Provider value={{ projects, loading, error, folderIssue, hasFolder, isLocal, supportsDirectoryPicker, provider, assistantName, sourceId, setProvider, pickFolder, changeFolder, reload, getSessionData, search }}>
       {children}
     </FolderContext.Provider>
   );

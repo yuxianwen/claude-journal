@@ -13,18 +13,18 @@ Lokale Web-App zum Durchsuchen und Nachverfolgen deiner Claude-Code- und Codex-K
 - **Konversations-Rendering** — Vollständiges Markdown-Rendering, syntaxhervorgehobene Code-Blöcke (Shiki), GFM-Tabellen & Aufgabenlisten
 - **Werkzeugaufruf-Visualisierung** — Jeder Werkzeugaufruf von Claude (Bash, Dateilesen/-schreiben usw.) und sein Ergebnis wird angezeigt
 - **Denkblöcke** — Einklappbare Anzeige von Claudes Denkprozess
-- **Token-Statistiken** — Anzahl der Eingabe-/Ausgabe-/Cache-Tokens und geschätzte Kosten pro Sitzung
-- **Volltextsuche** — `⌘K` für sofortige sitzungsübergreifende Suche
+- **Token-Statistiken** — Anzahl der Eingabe-/Ausgabe-/Cache-Tokens pro Sitzung
+- **Volltextsuche** — `⌘K` durchsucht einen lokalen Index, der nur geänderte Sitzungen neu aufbaut
 - **Als Markdown / Bild exportieren** — Beliebige Nachricht als Markdown oder Screenshot mit einem Klick kopieren
 - **Theme-Umschalter** — Helles, dunkles oder System-Theme mit gespeicherter Einstellung
 - **11-sprachige Benutzeroberfläche** — Erkennt automatisch die Browser-Sprache; jederzeit über den Sprachauswähler wechselbar
-- **Inline-Bilder** — In Nachrichten eingebettete Bilder (base64 oder URL) werden direkt angezeigt; Klick zum Vergrößern
+- **Private Bilder** — Eingebettete Bilder werden lokal angezeigt; externe URLs erst nach Bestätigung geladen
 - **Bild-Lightbox** — Vollbild-Overlay mit Hintergrundunschärfe; schließen mit `Esc` oder Klick außerhalb
 - **Slash-Befehlsanzeige** — `/Befehl`-Nachrichten werden als stilisierte Chips statt als rohem XML angezeigt
 - **Lokale Befehlsausgabe** — Shell-Ausgabeblöcke werden im Terminal-Stil angezeigt; ausführliche Hinweise sind einklappbar
 - **Dauerhafte Filterleiste** — Filtereinstellungen (Denken, Tools, Nutzer-/Claude-Nachrichten) bleiben beim Sessionwechsel erhalten
 - **Sitzungsgedächtnis** — Die zuletzt besuchte Sitzung wird beim Neuladen über URL-Parameter wiederhergestellt
-- **Teilbare URLs** — URL kopieren, um die genaue Sitzung und Scrollposition zu teilen oder zu speichern (`?p=&s=&scroll=`)
+- **Lesezeichen-URLs** — URL kopieren, um die genaue Sitzung und Scrollposition im selben Browser und auf demselben Rechner erneut zu öffnen (`?p=&s=&scroll=`). Die URL enthält keine Sitzungsdaten und gewährt keinen Zugriff auf lokale Dateien.
 - **Nach oben** — Ein schwebendes Button erscheint bei tiefem Scrollen; ein Klick springt zurück nach oben
 - **PWA** — Auf Desktop oder Startbildschirm installierbar; automatische stille Updates bei neuen Versionen
 

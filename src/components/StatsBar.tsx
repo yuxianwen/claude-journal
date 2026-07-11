@@ -1,24 +1,7 @@
 'use client';
 
-import { SessionMeta, TokenUsage } from '@/types';
+import { SessionMeta } from '@/types';
 import { useI18n } from '@/i18n';
-
-// Pricing per million tokens (Sonnet 4.5 as default)
-const PRICING = {
-  input: 3.0,
-  output: 15.0,
-  cacheRead: 0.30,
-  cacheCreate: 3.75,
-};
-
-function calcCost(usage: TokenUsage): number {
-  return (
-    (usage.inputTokens / 1e6) * PRICING.input +
-    (usage.outputTokens / 1e6) * PRICING.output +
-    (usage.cacheReadTokens / 1e6) * PRICING.cacheRead +
-    (usage.cacheCreateTokens / 1e6) * PRICING.cacheCreate
-  );
-}
 
 function fmt(n: number): string {
   if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -43,7 +26,6 @@ interface StatsBarProps {
 
 export default function StatsBar({ session, totalMessages }: StatsBarProps) {
   const { t } = useI18n();
-  const cost = calcCost(session.tokenUsage);
   const duration = formatDuration(session.startTime, session.endTime);
 
   return (
@@ -78,13 +60,8 @@ export default function StatsBar({ session, totalMessages }: StatsBarProps) {
           <span>{fmt(session.tokenUsage.cacheReadTokens)} {t('statsCacheHit')}</span>
         </div>
       )}
-      {cost > 0 && (
-        <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
-          <span className="text-green-700">≈ ${cost.toFixed(3)}</span>
-        </div>
-      )}
       {session.model && (
-        <div className="flex-shrink-0 text-gray-700">{session.model}</div>
+        <div className="flex-shrink-0 text-gray-600 ml-auto">{session.model}</div>
       )}
     </div>
   );

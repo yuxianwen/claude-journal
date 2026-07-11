@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message, ContentBlock, TokenUsage } from '@/types';
@@ -8,6 +8,8 @@ import ToolCallBlock from './ToolCallBlock';
 import { useI18n } from '@/i18n';
 import { MessageFilters } from './ConversationView';
 import ClaudeIcon from './ClaudeIcon';
+import type { ToolResultValue } from '@/lib/tool-results';
+import PrivacyImage from './PrivacyImage';
 
 function messageToMarkdown(message: Message, userLabel: string, assistantName: string): string {
   const role = message.type === 'user' ? userLabel : assistantName;
@@ -131,39 +133,7 @@ function ThinkingBlock({ text, thinkingLabel, compressedLabel }: { text: string;
   );
 }
 
-function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-800/80 hover:bg-gray-700 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
-        title="关闭 (Esc)"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      <img
-        src={src}
-        alt=""
-        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      />
-    </div>
-  );
-}
-
 function ImageBlock({ block, isUser }: { block: ContentBlock & { type: 'image' }; isUser?: boolean }) {
-  const [lightbox, setLightbox] = useState(false);
   const { source } = block;
   const src = source.type === 'base64' && source.data && source.media_type
     ? `data:${source.media_type};base64,${source.data}`
@@ -171,14 +141,10 @@ function ImageBlock({ block, isUser }: { block: ContentBlock & { type: 'image' }
   if (!src) return null;
   return (
     <div className="my-2">
-      <img
+      <PrivacyImage
         src={src}
-        alt=""
-        onClick={() => setLightbox(true)}
         className={`max-w-full max-h-96 rounded-lg object-contain cursor-zoom-in ${isUser ? 'ml-auto' : ''}`}
-        loading="lazy"
       />
-      {lightbox && <ImageLightbox src={src} onClose={() => setLightbox(false)} />}
     </div>
   );
 }
@@ -297,33 +263,15 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
 
 interface MessageBubbleProps {
   message: Message;
-  nextMessage?: Message;
+  toolResults: Map<string, ToolResultValue>;
   filters: MessageFilters;
   assistantName: string;
 }
 
-export default function MessageBubble({ message, nextMessage, filters, assistantName }: MessageBubbleProps) {
+export default function MessageBubble({ message, toolResults, filters, assistantName }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const bubbleRef = useRef<HTMLDivElement>(null);
-
-  // Build tool result map from next message (tool_result blocks in user msg following tool_use)
-  const toolResults = new Map<string, string | ContentBlock[]>();
-  if (isUser) {
-    for (const block of message.content) {
-      if (block.type === 'tool_result') {
-        toolResults.set(block.tool_use_id, block.content);
-      }
-    }
-  }
-  // Also collect tool results from the *next* user message after this assistant message
-  if (!isUser && nextMessage?.type === 'user') {
-    for (const block of nextMessage.content) {
-      if (block.type === 'tool_result') {
-        toolResults.set(block.tool_use_id, block.content);
-      }
-    }
-  }
 
   // If this user message has only tool_result blocks (no text), skip rendering
   const hasOnlyToolResults = isUser && message.content.every(b => b.type === 'tool_result');

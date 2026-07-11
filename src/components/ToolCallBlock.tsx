@@ -1,24 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ContentBlock } from '@/types';
 import { useI18n } from '@/i18n';
-
-function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-800/80 hover:bg-gray-700 flex items-center justify-center text-gray-300 hover:text-white transition-colors" title="关闭 (Esc)">
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-      </button>
-      <img src={src} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
-    </div>
-  );
-}
+import PrivacyImage from './PrivacyImage';
 
 const TOOL_ICONS: Record<string, string> = {
   Bash: '⚡',
@@ -42,6 +27,7 @@ function getToolIcon(name: string) {
 
 function formatInput(input: Record<string, unknown>, toolName: string): string {
   if (toolName === 'Bash' && input.command) return String(input.command);
+  if (toolName.endsWith('exec_command') && input.cmd) return String(input.cmd);
   if (toolName === 'Read' && input.file_path) return String(input.file_path);
   if (toolName === 'Write' && input.file_path) return String(input.file_path);
   if (toolName === 'Edit' && input.file_path) return String(input.file_path);
@@ -53,31 +39,45 @@ function formatInput(input: Record<string, unknown>, toolName: string): string {
   return JSON.stringify(input).slice(0, 120);
 }
 
+const RESULT_PREVIEW_LENGTH = 2000;
+
 interface ToolCallBlockProps {
   block: ContentBlock & { type: 'tool_use' };
   result?: string | ContentBlock[];
 }
 
 function ToolImage({ src }: { src: string }) {
-  const [lightbox, setLightbox] = useState(false);
   return (
-    <>
-      <img src={src} alt="" onClick={() => setLightbox(true)} className="max-w-full max-h-64 rounded object-contain cursor-zoom-in" loading="lazy" />
-      {lightbox && <ImageLightbox src={src} onClose={() => setLightbox(false)} />}
-    </>
+    <PrivacyImage src={src} className="max-w-full max-h-64 rounded object-contain cursor-zoom-in" />
   );
 }
 
-function ToolResultContent({ result }: { result: string | ContentBlock[] }) {
+function resultText(result: string | ContentBlock[]): string {
+  if (typeof result === 'string') return result;
+  return result.map(block => {
+    if (block.type === 'text') return block.text;
+    if (block.type === 'image') return block.source.url
+      ? `[External image: ${block.source.url}]`
+      : `[Embedded image: ${block.source.media_type || 'unknown'}]`;
+    return '';
+  }).filter(Boolean).join('\n');
+}
+
+function previewText(text: string, showAll: boolean): string {
+  if (showAll || text.length <= RESULT_PREVIEW_LENGTH) return text;
+  return `${text.slice(0, RESULT_PREVIEW_LENGTH)}\n…`;
+}
+
+function ToolResultContent({ result, showAll }: { result: string | ContentBlock[]; showAll: boolean }) {
   if (typeof result === 'string') {
-    const text = result.length > 2000 ? result.slice(0, 2000) + '\n... (truncated)' : result;
+    const text = previewText(result, showAll);
     return <pre className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{text}</pre>;
   }
   return (
     <div className="space-y-1">
       {result.map((block, i) => {
         if (block.type === 'text') {
-          const text = block.text.length > 2000 ? block.text.slice(0, 2000) + '\n... (truncated)' : block.text;
+          const text = previewText(block.text, showAll);
           return <pre key={i} className="text-gray-400 text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">{text}</pre>;
         }
         if (block.type === 'image') {
@@ -96,9 +96,24 @@ function ToolResultContent({ result }: { result: string | ContentBlock[] }) {
 export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const summary = formatInput(block.input, block.name);
   const hasResult = result !== undefined && result !== '' && (!Array.isArray(result) || result.length > 0);
+  const fullResultText = hasResult ? resultText(result!) : '';
+  const resultIsLong = fullResultText.length > RESULT_PREVIEW_LENGTH;
+
+  const copyResult = async () => {
+    if (!fullResultText) return;
+    try {
+      await navigator.clipboard.writeText(fullResultText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard permissions vary by browser; leave the output visible.
+    }
+  };
 
   return (
     <div className="my-1.5 rounded-lg border border-gray-700/50 bg-gray-900/60 overflow-hidden text-xs font-mono">
@@ -127,8 +142,20 @@ export default function ToolCallBlock({ block, result }: ToolCallBlockProps) {
           </div>
           {hasResult && (
             <div className="px-3 py-2 border-t border-gray-700/50 bg-gray-950/30">
-              <p className="text-gray-500 text-xs mb-1">{t('toolOutput')}</p>
-              <ToolResultContent result={result!} />
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-gray-500 text-xs flex-1">{t('toolOutput')}</p>
+                {fullResultText && (
+                  <button type="button" onClick={copyResult} className="text-gray-500 hover:text-gray-300">
+                    {copied ? t('toolCopied') : t('toolCopy')}
+                  </button>
+                )}
+                {resultIsLong && (
+                  <button type="button" onClick={() => setShowAll(value => !value)} className="text-blue-500 hover:text-blue-400">
+                    {showAll ? t('toolShowLess') : t('toolShowAll')}
+                  </button>
+                )}
+              </div>
+              <ToolResultContent result={result!} showAll={showAll} />
             </div>
           )}
         </div>
