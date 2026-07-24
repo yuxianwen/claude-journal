@@ -95,6 +95,15 @@ export interface T {
   filterTools: string
   filterUser: string
   filterClaude: string
+  settingsTitle: string
+  settingsTheme: string
+  settingsThemeSystem: string
+  settingsThemeLight: string
+  settingsThemeDark: string
+  settingsLanguage: string
+  settingsTranslateTarget: string
+  settingsTranslateTargetHint: string
+  settingsDone: string
 }
 
 // {n} is replaced with the numeric value at runtime
@@ -177,7 +186,16 @@ export const translations: Record<Locale, T> = {
     filterTools: '工具',
     filterUser: '用户',
     filterClaude: 'Claude',
-  },
+    settingsTitle: '首选项',
+    settingsTheme: '主题外观',
+    settingsThemeSystem: '跟随系统',
+    settingsThemeLight: '浅色',
+    settingsThemeDark: '深色',
+    settingsLanguage: '界面语言',
+    settingsTranslateTarget: '默认翻译目标语言',
+    settingsTranslateTargetHint: '点击消息框底部的翻译按钮时，会默认翻译为该语言。',
+    settingsDone: '完成'
+    },
   'en': {
     pickerTitle: 'Select data directory',
     pickerDesc: 'The browser reads your files directly — nothing is uploaded.',
@@ -256,7 +274,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Tools',
     filterUser: 'User',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'ja': {
     pickerTitle: 'データフォルダを選択',
     pickerDesc: 'ブラウザがローカルファイルを直接読み取ります。データはアップロードされません。',
@@ -335,7 +362,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'ツール',
     filterUser: 'ユーザー',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'ko': {
     pickerTitle: '데이터 폴더 선택',
     pickerDesc: '브라우저가 로컬 파일을 직접 읽습니다. 데이터는 업로드되지 않습니다.',
@@ -414,7 +450,16 @@ export const translations: Record<Locale, T> = {
     filterTools: '도구',
     filterUser: '사용자',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'es': {
     pickerTitle: 'Seleccionar directorio de datos',
     pickerDesc: 'El navegador lee los archivos localmente. No se sube nada.',
@@ -493,7 +538,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Herramientas',
     filterUser: 'Usuario',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'fr': {
     pickerTitle: 'Sélectionner le dossier de données',
     pickerDesc: "Le navigateur lit les fichiers localement. Aucune donnée n'est envoyée.",
@@ -572,7 +626,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Outils',
     filterUser: 'Utilisateur',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'de': {
     pickerTitle: 'Datenordner auswählen',
     pickerDesc: 'Der Browser liest Dateien lokal. Es werden keine Daten hochgeladen.',
@@ -651,7 +714,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Werkzeuge',
     filterUser: 'Benutzer',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'pt': {
     pickerTitle: 'Selecionar pasta de dados',
     pickerDesc: 'O navegador lê os arquivos localmente. Nenhum dado é enviado.',
@@ -730,7 +802,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Ferramentas',
     filterUser: 'Usuário',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'ru': {
     pickerTitle: 'Выбрать папку данных',
     pickerDesc: 'Браузер читает файлы локально. Данные не загружаются.',
@@ -809,7 +890,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'Инструменты',
     filterUser: 'Польз.',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'ar': {
     pickerTitle: 'اختر مجلد البيانات',
     pickerDesc: 'يقرأ المتصفح الملفات محلياً. لا يتم رفع أي بيانات.',
@@ -888,7 +978,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'الأدوات',
     filterUser: 'مستخدم',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
   'hi': {
     pickerTitle: 'डेटा फ़ोल्डर चुनें',
     pickerDesc: 'ब्राउज़र फ़ाइलें सीधे स्थानीय रूप से पढ़ता है। कोई डेटा अपलोड नहीं होता।',
@@ -967,7 +1066,16 @@ export const translations: Record<Locale, T> = {
     filterTools: 'उपकरण',
     filterUser: 'उपयोगकर्ता',
     filterClaude: 'Claude',
-  },
+    settingsTitle: 'Preferences',
+    settingsTheme: 'Theme',
+    settingsThemeSystem: 'System',
+    settingsThemeLight: 'Light',
+    settingsThemeDark: 'Dark',
+    settingsLanguage: 'UI Language',
+    settingsTranslateTarget: 'Default Translate Target',
+    settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
+    settingsDone: 'Done'
+    },
 };
 
 export function detectLocale(): Locale {

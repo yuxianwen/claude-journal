@@ -1,6 +1,6 @@
 # AI Journal
 
-A PWA for browsing and reviewing Claude Code and Codex conversation history. Runs entirely in the browser for remote use — reads local files directly via the File System Access API. No server, no data uploaded.
+A PWA for browsing and reviewing conversation history from Claude Code, Codex, and Antigravity (Gemini). Runs entirely in the browser for remote use — reads local files directly via the File System Access API. No server, no data uploaded.
 
 **Live Demo:** [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)
 
@@ -15,7 +15,9 @@ A PWA for browsing and reviewing Claude Code and Codex conversation history. Run
 - **Conversation Rendering** — Full Markdown rendering, syntax-highlighted code blocks (Shiki), GFM tables & task lists
 - **Privacy-aware Images** — Embedded images render locally; external URLs stay blocked until you choose to load them
 - **Image Lightbox** — Full-screen overlay with backdrop blur; close with `Esc` or by clicking outside
-- **Claude / Codex Sources** — Switch between Claude Code history and Codex history from the sidebar
+- **Multi-Agent Support** — Switch smoothly between Claude Code, Codex, and Antigravity (Gemini CLI) histories directly from the Settings menu
+- **Inline Message Translation** — One-click translation of agent or user messages to your preferred language
+- **Global Settings Panel** — Conveniently configure your preferred Data Source, UI Language, Translation Target, and Theme in one place (Shortcut: `Cmd+,`)
 - **Tool Call Visualization** — See every tool call made by the assistant (Bash, file reads/writes, screenshots, etc.) and its output, including inline image results
 - **Thinking Blocks** — Collapsible display of reasoning content when available
 - **Slash Command Display** — `/command` messages render as styled chips instead of raw XML
@@ -39,7 +41,7 @@ A PWA for browsing and reviewing Claude Code and Codex conversation history. Run
 
 ### Option 1 — Use Online (Recommended)
 
-Open [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org), choose **Claude** or **Codex**, then click **"选择文件夹"**. Select `~/.claude/projects/` for Claude Code or `~/.codex/sessions/` for Codex. The browser reads files directly from your machine — nothing is uploaded.
+Open [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org), open Settings (`Cmd+,`) to select **Claude**, **Codex**, or **Antigravity**, then click **"选择文件夹"**. Select `~/.claude/projects/` for Claude, `~/.codex/sessions/` for Codex, or `~/.gemini/antigravity-cli/brain/` for Antigravity. The browser reads files directly from your machine — nothing is uploaded.
 
 Your folder selection is persisted locally (IndexedDB), so subsequent visits load automatically.
 
@@ -54,7 +56,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Local mode can read `~/.claude/projects/` and `~/.codex/sessions/` through the app's API routes.
+Open [http://localhost:3000](http://localhost:3000). Local mode automatically reads `~/.claude/projects/`, `~/.codex/sessions/`, and `~/.gemini/` directly through the app's API routes without requiring folder selection.
 
 ## Tech Stack
 

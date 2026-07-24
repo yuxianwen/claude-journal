@@ -6,8 +6,7 @@ import { useI18n } from '@/i18n';
 import Sidebar from '@/components/Sidebar';
 import ConversationView, { MessageFilters } from '@/components/ConversationView';
 import SearchView from '@/components/SearchView';
-import LangSwitcher from '@/components/LangSwitcher';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
+import SettingsButton from '@/components/SettingsButton';
 
 const subscribeToStaticBrowserValue = () => () => {};
 
@@ -33,19 +32,6 @@ function FolderPicker() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b border-gray-800/50">
-        <select
-          value={provider}
-          onChange={e => setProvider(e.target.value === 'codex' ? 'codex' : 'claude')}
-          className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 outline-none"
-          title={t('pickerDataSource')}
-        >
-          <option value="claude">Claude</option>
-          <option value="codex">Codex</option>
-        </select>
-        <ThemeSwitcher />
-        <LangSwitcher />
-      </div>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-md px-4">
           <div className="text-5xl mb-6">📂</div>
@@ -185,7 +171,7 @@ export default function Home() {
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Collapsible sidebar wrapper */}
       {!showPicker && (
-        <div className={`fixed md:relative inset-y-0 left-0 z-50 h-full flex-shrink-0 overflow-hidden transition-all duration-200 ease-in-out ${sidebarOpen ? 'w-72' : 'w-0'}`}>
+        <div className={`fixed md:relative inset-y-0 left-0 z-50 h-full w-72 flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0 md:ml-0' : '-translate-x-full md:translate-x-0 md:-ml-72'}`}>
           {loading ? (
             <div className="w-72 bg-gray-900 border-r border-gray-800 h-full flex items-center justify-center">
               <div className="text-gray-600 text-xs animate-pulse">{t('convLoading')}</div>

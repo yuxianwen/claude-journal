@@ -8,8 +8,12 @@ import ToolCallBlock from './ToolCallBlock';
 import { useI18n } from '@/i18n';
 import { MessageFilters } from './ConversationView';
 import ClaudeIcon from './ClaudeIcon';
+import CodexIcon from './CodexIcon';
+import GeminiIcon from './GeminiIcon';
 import type { ToolResultValue } from '@/lib/tool-results';
 import PrivacyImage from './PrivacyImage';
+import { translateText } from '@/lib/translate';
+import { useSettings } from '@/contexts/SettingsContext';
 
 function messageToMarkdown(message: Message, userLabel: string, assistantName: string): string {
   const role = message.type === 'user' ? userLabel : assistantName;
@@ -104,10 +108,81 @@ function TokenBadge({ usage }: { usage: TokenUsage }) {
   const total = usage.inputTokens + usage.outputTokens;
   if (total === 0) return null;
   return (
-    <span className="text-xs text-gray-600 ml-2">
+    <span className="text-xs text-gray-600">
       ↑{(usage.inputTokens / 1000).toFixed(0)}K ↓{(usage.outputTokens / 1000).toFixed(0)}K
       {usage.cacheReadTokens > 0 && ` cache:${(usage.cacheReadTokens / 1000).toFixed(0)}K`}
     </span>
+  );
+}
+
+function MessageTime({ timestamp, locale }: { timestamp: string | number | undefined, locale: string }) {
+  const [showFull, setShowFull] = useState(false);
+  
+  if (!timestamp) return null;
+
+  const dateMs = new Date(timestamp).getTime();
+  const date = new Date(dateMs);
+  const now = new Date();
+  
+  const timeStr = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false });
+  const isSameYear = date.getFullYear() === now.getFullYear();
+  
+  let displayStr = '';
+
+  if (showFull) {
+    const dateStr = date.toLocaleDateString(locale, {
+      year: isSameYear ? undefined : 'numeric',
+      month: 'short',
+      day: 'numeric',
+      weekday: 'long'
+    });
+    displayStr = `${dateStr} ${timeStr}`;
+  } else {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.round((today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      displayStr = timeStr;
+    } else if (diffDays === 1) {
+      let yesterdayStr = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-1, 'day');
+      yesterdayStr = yesterdayStr.charAt(0).toUpperCase() + yesterdayStr.slice(1);
+      displayStr = `${yesterdayStr} ${timeStr}`;
+    } else if (diffDays > 1 && diffDays < 7) {
+      const weekday = date.toLocaleDateString(locale, { weekday: 'long' });
+      displayStr = `${weekday} ${timeStr}`;
+    } else {
+      const dateStr = date.toLocaleDateString(locale, {
+        year: isSameYear ? undefined : 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      displayStr = `${dateStr} ${timeStr}`;
+    }
+  }
+
+  return (
+    <span 
+      className="text-xs text-gray-500 cursor-pointer hover:text-gray-400 transition-colors"
+      onClick={() => setShowFull(!showFull)}
+    >
+      {displayStr}
+    </span>
+  );
+}
+
+function TranslateButton({ onTranslate, state, isUser, showTranslation }: { onTranslate: () => void; state: 'idle' | 'loading' | 'done'; isUser: boolean; showTranslation: boolean }) {
+  const cls = `opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-1.5 py-0.5 rounded text-xs
+    ${isUser ? 'text-blue-300 hover:text-white' : 'text-gray-500 hover:text-slate-700 dark:hover:text-gray-300'}`;
+
+  return (
+    <button onClick={(e) => { e.stopPropagation(); onTranslate(); }} title="Translate text" className={cls} disabled={state === 'loading'}>
+      {state === 'loading'
+        ? <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+      }
+      {state === 'loading' ? '' : (state === 'done' && showTranslation) ? 'Original' : 'Translate'}
+    </button>
   );
 }
 
@@ -230,7 +305,7 @@ function TextContent({ text, isUser }: { text: string; isUser?: boolean }) {
   );
 }
 
-function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number, thinkingLabel: string, compressedLabel: string, filters: MessageFilters, isUser: boolean) {
+function renderBlock(block: ContentBlock, toolResults: Map<string, string | ContentBlock[]>, idx: number, thinkingLabel: string, compressedLabel: string, filters: MessageFilters, isUser: boolean, translatedText?: string) {
   switch (block.type) {
     case 'text': {
       if (!block.text.trim()) return null;
@@ -238,7 +313,7 @@ function renderBlock(block: ContentBlock, toolResults: Map<string, string | Cont
       if (cmd) return <SlashCommandChip key={idx} name={cmd.name} args={cmd.args} />;
       const lcmd = parseLocalCmd(block.text);
       if (lcmd) return <LocalCmdBlock key={idx} {...lcmd} />;
-      return <TextContent key={idx} text={block.text} isUser={isUser} />;
+      return <TextContent key={idx} text={translatedText || block.text} isUser={isUser} />;
     }
     case 'thinking':
       if (!filters.thinking) return null;
@@ -269,22 +344,57 @@ interface MessageBubbleProps {
 }
 
 export default function MessageBubble({ message, toolResults, filters, assistantName }: MessageBubbleProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { translateTarget } = useSettings();
   const isUser = message.type === 'user';
   const bubbleRef = useRef<HTMLDivElement>(null);
+  
+  const [translatedBlocks, setTranslatedBlocks] = useState<Record<number, string>>({});
+  const [translateState, setTranslateState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [showTranslation, setShowTranslation] = useState(false);
+
+  const handleTranslate = async () => {
+    if (translateState === 'done') {
+      setShowTranslation(!showTranslation);
+      return;
+    }
+    
+    setTranslateState('loading');
+    try {
+      const newTranslatedBlocks: Record<number, string> = {};
+      await Promise.all(message.content.map(async (block, idx) => {
+        if (block.type === 'text' && block.text.trim()) {
+          const cmd = parseSlashCommand(block.text);
+          if (cmd) return;
+          const lcmd = parseLocalCmd(block.text);
+          if (lcmd) return;
+          
+          newTranslatedBlocks[idx] = await translateText(block.text, translateTarget);
+        }
+      }));
+      setTranslatedBlocks(newTranslatedBlocks);
+      setTranslateState('done');
+      setShowTranslation(true);
+    } catch (err) {
+      console.error('Translation failed:', err);
+      setTranslateState('idle');
+    }
+  };
 
   // If this user message has only tool_result blocks (no text), skip rendering
   const hasOnlyToolResults = isUser && message.content.every(b => b.type === 'tool_result');
   if (hasOnlyToolResults) return null;
 
-  const timeStr = message.timestamp
-    ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    : '';
-
   return (
     <div className={`group flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <ClaudeIcon className="w-7 h-7 flex-shrink-0 mt-0.5" />
+        assistantName.toLowerCase() === 'codex' ? (
+          <CodexIcon className="w-7 h-7 flex-shrink-0 mt-0.5" />
+        ) : assistantName.toLowerCase().includes('gemini') || assistantName.toLowerCase().includes('antigravity') ? (
+          <GeminiIcon className="w-7 h-7 flex-shrink-0 mt-0.5" />
+        ) : (
+          <ClaudeIcon className="w-7 h-7 flex-shrink-0 mt-0.5" />
+        )
       )}
 
       <div className={`max-w-[85%] min-w-0 ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
@@ -298,12 +408,22 @@ export default function MessageBubble({ message, toolResults, filters, assistant
             }
           `}
         >
-          {message.content.map((block, idx) => renderBlock(block, toolResults, idx, t('msgThinking'), t('msgThinkingCompressed'), filters, isUser))}
+          {message.content.map((block, idx) => renderBlock(
+            block, 
+            toolResults, 
+            idx, 
+            t('msgThinking'), 
+            t('msgThinkingCompressed'), 
+            filters, 
+            isUser, 
+            showTranslation ? translatedBlocks[idx] : undefined
+          ))}
         </div>
 
-        <div className={`flex items-center gap-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-          <span className="text-xs text-gray-600">{timeStr}</span>
+        <div className={`flex flex-wrap items-center gap-2 px-1 mt-0.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+          <MessageTime timestamp={message.timestamp} locale={locale} />
           {message.usage && <TokenBadge usage={message.usage} />}
+          <TranslateButton onTranslate={handleTranslate} state={translateState} isUser={isUser} showTranslation={showTranslation} />
           <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} assistantName={assistantName} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} />
           <CopyImgButton bubbleRef={bubbleRef} isUser={isUser} label={t('msgCopyImg')} copiedLabel={t('msgCopied')} />
         </div>

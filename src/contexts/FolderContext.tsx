@@ -88,13 +88,16 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
   );
   const [provider, setProviderState] = useState<Provider>(() => {
     if (typeof window === 'undefined') return 'claude';
-    if (new URLSearchParams(window.location.search).get('provider') === 'codex') return 'codex';
-    return localStorage.getItem('claude-journal-provider') === 'codex' ? 'codex' : 'claude';
+    const p = new URLSearchParams(window.location.search).get('provider');
+    if (p === 'codex' || p === 'gemini') return p;
+    const stored = localStorage.getItem('claude-journal-provider');
+    if (stored === 'codex' || stored === 'gemini') return stored as Provider;
+    return 'claude';
   });
   const providerRef = useRef(provider);
   const [sourceId, setSourceId] = useState<string | null>(null);
   const sourceIdRef = useRef(sourceId);
-  const assistantName = provider === 'codex' ? 'Codex' : 'Claude';
+  const assistantName = provider === 'gemini' ? 'Gemini' : provider === 'codex' ? 'Codex' : 'Claude';
 
   const isCurrentFolderOperation = useCallback((operationId: number, targetProvider: Provider) => (
     folderOperationRef.current === operationId && providerRef.current === targetProvider

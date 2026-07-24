@@ -1,6 +1,6 @@
 # AI Journal
 
-用于浏览和回顾 Claude Code 与 Codex 对话历史的 PWA。远程使用时完全在浏览器中运行，通过 File System Access API 直接读取本地文件。无需服务器，不上传任何数据。
+用于浏览和回顾 Claude Code、Codex 以及 Antigravity (Gemini) 对话历史的 PWA。远程使用时完全在浏览器中运行，通过 File System Access API 直接读取本地文件。无需服务器，不上传任何数据。
 
 **在线地址：** [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)
 
@@ -15,6 +15,9 @@
 - **对话渲染** — Markdown 全渲染，代码块语法高亮（Shiki），支持 GFM 表格 / 任务列表
 - **隐私图片加载** — 内嵌图片在本地显示；外链图片只有经你点击确认后才会请求
 - **图片灯箱** — 全屏遮罩层，带背景模糊效果；按 `Esc` 或点击背景关闭
+- **多端智能体支持** — 在左下角的全局设置菜单中可一键切换 Claude Code、Codex 与 Antigravity (Gemini CLI) 历史
+- **消息一键翻译** — 一键将大模型输出的外语或用户提问翻译为你偏好的本地语言
+- **全局首选项面板** — 一站式管理数据源、界面语言、翻译目标语言和主题外观（快捷键 `Cmd+,` 打开）
 - **工具调用展示** — 可视化助手执行的每次工具调用（Bash、文件读写、截图等）及其输出，包含内联图片结果
 - **Thinking 块** — 折叠展示 助手的推理过程
 - **斜杠命令显示** — `/command` 消息渲染为样式化标签，不再是原始 XML
@@ -38,7 +41,7 @@
 
 ### 方式一 — 直接使用在线版（推荐）
 
-打开 [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)，先选择 **Claude** 或 **Codex**，再点击 **"选择文件夹"**。Claude Code 选择 `~/.claude/projects/`，Codex 选择 `~/.codex/sessions/`。浏览器直接从本机读取文件，不会上传任何内容。
+打开 [https://claude-journa.yuxianwen.dpdns.org](https://claude-journa.yuxianwen.dpdns.org)，通过 `Cmd+,` 打开设置，先选择 **Claude**、**Codex** 或者是 **Antigravity** 数据源，再点击 **"选择文件夹"**。Claude Code 选择 `~/.claude/projects/`，Codex 选择 `~/.codex/sessions/`，Antigravity 选择 `~/.gemini/antigravity-cli/brain/`。浏览器直接从本机读取文件，不会上传任何内容。
 
 文件夹选择会保存在本地（IndexedDB），下次访问自动加载。
 
@@ -53,7 +56,7 @@ pnpm install
 pnpm dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 即可。可在本地模式中切换 Claude Code 与 Codex。
+打开 [http://localhost:3000](http://localhost:3000) 即可。本地模式下应用会自动通过 API 路由读取本地 `~/.claude/projects/`、`~/.codex/sessions/` 和 `~/.gemini/` 等相关目录，无需手动选择文件夹。
 
 ## 技术栈
 

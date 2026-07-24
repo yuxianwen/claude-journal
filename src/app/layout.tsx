@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FolderProvider } from "@/contexts/FolderContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 import { I18nProvider } from "@/i18n";
 import SwRegister from "@/components/SwRegister";
 
@@ -47,7 +48,9 @@ export default function RootLayout({
         <SwRegister />
         <ThemeProvider>
           <I18nProvider>
-            <FolderProvider>{children}</FolderProvider>
+            <FolderProvider>
+              <SettingsProvider>{children}</SettingsProvider>
+            </FolderProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

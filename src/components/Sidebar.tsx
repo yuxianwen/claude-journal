@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Project, Provider, SessionMeta } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
-import LangSwitcher from './LangSwitcher';
-import ThemeSwitcher from './ThemeSwitcher';
+import SettingsButton from './SettingsButton';
 import {
   ANNOTATIONS_CHANGE_EVENT,
   listSessionAnnotations,
@@ -158,17 +157,6 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
         <div className="flex items-center justify-between">
           <h1 className="text-sm font-semibold text-gray-200 tracking-wide">AI Journal</h1>
           <div className="flex items-center gap-2">
-            <select
-              value={provider}
-              onChange={e => setProvider(e.target.value as Provider)}
-              className="bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-gray-300 outline-none"
-              title={t('pickerDataSource')}
-            >
-              <option value="claude">Claude</option>
-              <option value="codex">Codex</option>
-            </select>
-            <ThemeSwitcher />
-            <LangSwitcher />
             <button
               onClick={handleReload}
               title={t('sidebarReload')}
@@ -301,6 +289,19 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
             )}
           </div>
         ))}
+      </div>
+
+      {/* Bottom Profile / Settings Area */}
+      <div className="mt-auto border-t border-gray-800 px-4 py-3 bg-gray-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+            {provider === 'codex' ? 'Cx' : provider === 'gemini' ? 'Ag' : 'Cl'}
+          </div>
+          <span className="text-xs font-medium text-gray-300 capitalize">
+            {provider === 'gemini' ? 'Antigravity' : provider}
+          </span>
+        </div>
+        <SettingsButton className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors" />
       </div>
     </aside>
   );

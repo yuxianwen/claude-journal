@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, getSessionMtime } from '@/lib/reader';
 import { getCodexSession, getCodexSessionMtime } from '@/lib/codex-reader';
+import { getGeminiConversation, getGeminiSessionMtime } from '@/lib/gemini-reader';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,9 @@ export function GET(request: Request) {
 
   // Cheap conditional check first: if the file hasn't changed since the
   // client's last read, skip the full parse/transfer entirely.
-  const mtimeMs = provider === 'codex'
+  const mtimeMs = provider === 'gemini' 
+    ? getGeminiSessionMtime(projectId, sessionId)
+    : provider === 'codex'
     ? getCodexSessionMtime(projectId, sessionId)
     : getSessionMtime(projectId, sessionId);
   if (mtimeMs === null) {
@@ -27,7 +30,9 @@ export function GET(request: Request) {
     return NextResponse.json({ unchanged: true, mtimeMs });
   }
 
-  const data = provider === 'codex'
+  const data = provider === 'gemini'
+    ? getGeminiConversation(projectId, sessionId)
+    : provider === 'codex'
     ? getCodexSession(projectId, sessionId)
     : getSession(projectId, sessionId);
   if (!data) {
