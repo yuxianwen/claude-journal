@@ -7,6 +7,8 @@ import {
   getCodexAllProjects,
   getCodexSession,
   getSession,
+  getGeminiAllProjects,
+  getGeminiSession,
 } from '@/lib/fs-reader';
 import {
   clearHandle,
@@ -149,7 +151,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     setError('');
     setFolderIssue(null);
     try {
-      const data = targetProvider === 'codex'
+      const data = targetProvider === 'gemini' ? await getGeminiAllProjects(handle) : targetProvider === 'codex'
         ? await getCodexAllProjects(handle)
         : await getAllProjects(handle);
       if (!isCurrentFolderOperation(operationId, targetProvider)) return false;
@@ -372,6 +374,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
       return res.json();
     }
     if (!handleRef.current) return null;
+    if (provider === 'gemini') { return getGeminiSession(handleRef.current!, projectId, sessionId, since); }
     return provider === 'codex'
       ? getCodexSession(handleRef.current, projectId, sessionId, since)
       : getSession(handleRef.current, projectId, sessionId, since);

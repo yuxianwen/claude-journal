@@ -27,8 +27,9 @@ function FolderPicker() {
     getIsWindowsServerSnapshot,
   );
   const isCodex = provider === 'codex';
-  const macPath = isCodex ? '~/.codex/sessions' : '~/.claude/projects';
-  const winPath = isCodex ? '%USERPROFILE%\\.codex\\sessions' : '%APPDATA%\\Claude\\projects';
+  const isGemini = provider === 'gemini';
+  const macPath = isGemini ? '~/.gemini/antigravity-cli' : isCodex ? '~/.codex/sessions' : '~/.claude/projects';
+  const winPath = isGemini ? '%USERPROFILE%\\.gemini\\antigravity-cli' : isCodex ? '%USERPROFILE%\\.codex\\sessions' : '%APPDATA%\\Claude\\projects';
 
   return (
     <div className="flex-1 flex flex-col">
@@ -50,7 +51,7 @@ function FolderPicker() {
               <div>
                 <p className="text-xs text-gray-400 font-medium mb-1">{t('pickerWindows')}</p>
                 <code className="text-blue-400 bg-gray-800 px-1.5 py-0.5 rounded text-xs">{winPath}</code>
-                {!isCodex && <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>}
+                {provider === 'claude' && <p className="text-xs text-gray-600 mt-1"><code className="text-gray-500 text-xs">{t('pickerWindowsNote')}</code></p>}
               </div>
             </div>
           </div>

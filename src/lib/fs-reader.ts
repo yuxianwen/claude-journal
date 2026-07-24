@@ -424,3 +424,180 @@ export async function searchCodexSessions(
 
   return results;
 }
+
+
+// --- Gemini Parser ---
+
+export function parseGeminiSession(projectId: string, sessionId: string, rawData: string, mtimeMs: number): ConversationData {
+  const lines = rawData.split('\n').filter(Boolean);
+  const messages: Message[] = [];
+  let parentUuid: string | null = null;
+  
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+      const isUser = parsed.source === 'USER_EXPLICIT' || parsed.type === 'USER_INPUT';
+      const isModel = parsed.source === 'MODEL';
+      if (!isUser && !isModel) continue; 
+      
+      const uuid = `${sessionId}-${parsed.step_index}`;
+      const blocks: ContentBlock[] = [];
+      
+      if (parsed.thinking) {
+        blocks.push({ type: 'thinking', thinking: parsed.thinking });
+      }
+      if (parsed.content) {
+        let text = parsed.content;
+        if (isUser) {
+           const m = text.match(/<USER_REQUEST>\s*([\s\S]*?)\s*<\/USER_REQUEST>/);
+           if (m) text = m[1];
+        }
+        blocks.push({ type: 'text', text });
+      }
+      if (parsed.tool_calls && Array.isArray(parsed.tool_calls)) {
+        for (let i=0; i<parsed.tool_calls.length; i++) {
+          const tc = parsed.tool_calls[i];
+          blocks.push({
+            type: 'tool_use',
+            id: `call_${parsed.step_index}_${i}`,
+            name: tc.name,
+            input: tc.args || {}
+          });
+        }
+      }
+      
+      if (blocks.length > 0) {
+         messages.push({
+           uuid,
+           parentUuid,
+           type: isUser || parsed.type === 'TOOL_RESPONSE' ? 'user' : 'assistant',
+           timestamp: parsed.created_at || new Date().toISOString(),
+           content: blocks,
+           isSidechain: false,
+         });
+         parentUuid = uuid;
+      }
+    } catch(e) {}
+  }
+  
+  const startTime = messages[0]?.timestamp || new Date().toISOString();
+  const endTime = messages[messages.length-1]?.timestamp || startTime;
+
+  const sessionMeta: SessionMeta = {
+    id: sessionId,
+    provider: 'gemini',
+    projectId: projectId,
+    title: `Session ${sessionId.substring(0, 8)}`,
+    startTime,
+    endTime,
+    messageCount: messages.length,
+    toolCallCount: messages.reduce((acc, m) => acc + m.content.filter(b => b.type === 'tool_use').length, 0),
+    tokenUsage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreateTokens: 0 },
+    cwd: '~/.gemini/antigravity-cli',
+    model: 'Gemini (Antigravity)',
+  };
+
+  return { session: sessionMeta, messages, mtimeMs };
+}
+
+export async function getGeminiAllProjects(dirHandle: FileSystemDirectoryHandle): Promise<Project[]> {
+  const sessionToWorkspace = new Map<string, string>();
+  try {
+    const historyHandle = await dirHandle.getFileHandle('history.jsonl');
+    const file = await historyHandle.getFile();
+    const content = await file.text();
+    for (const line of content.split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const parsed = JSON.parse(line);
+        if (parsed.conversationId && parsed.workspace) {
+          sessionToWorkspace.set(parsed.conversationId, parsed.workspace);
+        }
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  let brainHandle: FileSystemDirectoryHandle;
+  try {
+    brainHandle = await dirHandle.getDirectoryHandle('brain');
+  } catch {
+    return [];
+  }
+
+  const byProject = new Map<string, SessionMeta[]>();
+
+  for await (const [name, handle] of (brainHandle as any).entries()) {
+    if (handle.kind === 'directory' && name !== 'scratch') {
+      try {
+        const sysHandle = await handle.getDirectoryHandle('.system_generated');
+        const logsHandle = await sysHandle.getDirectoryHandle('logs');
+        const transcriptHandle = await logsHandle.getFileHandle('transcript.jsonl');
+        const file = await transcriptHandle.getFile();
+        
+        // Only read metadata
+        // For performance, we parse the whole file since we don't have a cheap metadata cache yet,
+        // but we can optimize this later if needed.
+        const content = await file.text();
+        const workspacePath = sessionToWorkspace.get(name) || 'ungrouped';
+        const projectId = workspacePath === 'ungrouped' ? 'ungrouped' : workspacePath.split(/[\\/]/).pop() || 'ungrouped';
+        
+        const { session } = parseGeminiSession(projectId, name, content, file.lastModified);
+        
+        if (!byProject.has(projectId)) byProject.set(projectId, []);
+        byProject.get(projectId)!.push(session);
+      } catch (e) {
+        // Not a valid session or missing transcript
+      }
+    }
+  }
+
+  const projects: Project[] = [];
+  for (const [projectId, sessions] of byProject.entries()) {
+    sessions.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    projects.push({
+      id: projectId,
+      name: projectId,
+      provider: 'gemini',
+      cwd: '~/.gemini/antigravity-cli',
+      totalTokens: sessions.reduce((sum, s) => ({
+        inputTokens: sum.inputTokens + (s.tokenUsage?.inputTokens || 0),
+        outputTokens: sum.outputTokens + (s.tokenUsage?.outputTokens || 0),
+        cacheReadTokens: sum.cacheReadTokens + (s.tokenUsage?.cacheReadTokens || 0),
+        cacheCreateTokens: sum.cacheCreateTokens + (s.tokenUsage?.cacheCreateTokens || 0)
+      }), { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreateTokens: 0 }),
+      sessions,
+    });
+  }
+
+  projects.sort((a, b) => {
+    if (a.sessions.length === 0) return 1;
+    if (b.sessions.length === 0) return -1;
+    return new Date(b.sessions[0].startTime).getTime() - new Date(a.sessions[0].startTime).getTime();
+  });
+
+  return projects;
+}
+
+export async function getGeminiSession(
+  dirHandle: FileSystemDirectoryHandle,
+  projectId: string,
+  sessionId: string,
+  since?: number,
+): Promise<ConversationData | { unchanged: true } | null> {
+  try {
+    const brainHandle = await dirHandle.getDirectoryHandle('brain');
+    const sessionHandle = await brainHandle.getDirectoryHandle(sessionId);
+    const sysHandle = await sessionHandle.getDirectoryHandle('.system_generated');
+    const logsHandle = await sysHandle.getDirectoryHandle('logs');
+    const transcriptHandle = await logsHandle.getFileHandle('transcript.jsonl');
+    
+    const file = await transcriptHandle.getFile();
+    const mtimeMs = file.lastModified;
+    if (since != null && mtimeMs <= since) return { unchanged: true };
+    
+    const content = await file.text();
+    return parseGeminiSession(projectId, sessionId, content, mtimeMs);
+  } catch {
+    return null;
+  }
+}
