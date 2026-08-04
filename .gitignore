@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated at build/dev time from scripts/sw-template.js
+/public/sw.js
+
 # production
 /build
 

@@ -1,6 +1,6 @@
-// Cache name is stamped with a build version at deploy time (scripts/stamp-sw.js).
-// Changing the name on each deploy ensures browsers detect a new SW and bust stale caches.
-const CACHE = 'ai-journal-1784850004970';
+// Cache name is stamped with a build version at build time (scripts/stamp-sw.mjs).
+// Changing the name on each build ensures browsers detect a new SW and bust stale caches.
+const CACHE = '__BUILD_VERSION__';
 
 const PRECACHE = [
   '/',

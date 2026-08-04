@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://claude-journa.yuxianwen.dpdns.org",
   "scripts": {
+    "predev": "node scripts/stamp-sw.mjs",
     "dev": "next dev",
     "prebuild": "node scripts/stamp-sw.mjs",
     "build": "next build",

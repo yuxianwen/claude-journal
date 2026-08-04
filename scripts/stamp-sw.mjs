@@ -3,14 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const swPath = path.join(scriptDir, '..', 'public', 'sw.js');
+const templatePath = path.join(scriptDir, 'sw-template.js');
+const outPath = path.join(scriptDir, '..', 'public', 'sw.js');
 const version = Date.now();
 
-const content = fs.readFileSync(swPath, 'utf8');
-const stamped = content.replace(
-  /const CACHE = '(?:claude|ai)-journal-[^']+';/,
-  `const CACHE = 'ai-journal-${version}';`,
-);
+const template = fs.readFileSync(templatePath, 'utf8');
+const stamped = template.replace('__BUILD_VERSION__', `ai-journal-${version}`);
 
-fs.writeFileSync(swPath, stamped);
+fs.writeFileSync(outPath, stamped);
 console.log(`[SW] Build version stamped: ${version}`);

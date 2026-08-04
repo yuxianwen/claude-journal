@@ -14,7 +14,8 @@ export default function SwRegister() {
         };
         document.addEventListener('visibilitychange', handleVisibility);
         return () => document.removeEventListener('visibilitychange', handleVisibility);
-      });
+      })
+      .catch(() => {});
 
     // When a new SW takes control (skipWaiting fired), reload to run the latest code.
     let reloading = false;
