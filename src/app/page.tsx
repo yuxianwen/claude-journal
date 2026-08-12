@@ -62,7 +62,7 @@ function FolderPicker() {
             </div>
           )}
           <button
-            onClick={pickFolder}
+            onClick={() => pickFolder()}
             disabled={!supportsDirectoryPicker}
             className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
           >

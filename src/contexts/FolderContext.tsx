@@ -53,7 +53,7 @@ interface FolderContextType {
   assistantName: string;
   sourceId: string | null;
   setProvider: (provider: Provider) => void;
-  pickFolder: () => Promise<void>;
+  pickFolder: (opts?: { forceNew?: boolean }) => Promise<void>;
   changeFolder: () => Promise<void>;
   reload: () => Promise<void>;
   getSessionData: (projectId: string, sessionId: string, since?: number) => Promise<ConversationData | { unchanged: true } | null>;
@@ -287,7 +287,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
 
   // ── Folder picker (remote only) ────────────────────────────────────────────
 
-  const pickFolder = useCallback(async () => {
+  const pickFolder = useCallback(async (opts?: { forceNew?: boolean }) => {
     if (isLocal) return;
     if (!window.showDirectoryPicker) {
       setError('');
@@ -300,6 +300,33 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     const previousSourceId = sourceIdRef.current;
     const previousProjects = projects;
     const previouslyHadFolder = hasFolder;
+
+    // Reuse the previously granted handle when we have one: this click just
+    // supplied the user gesture that requestPermission() needs, so a saved
+    // handle can be reconfirmed without forcing a full re-pick. Skipped when
+    // the user explicitly asked to change folders (opts.forceNew).
+    const saved = opts?.forceNew ? null : await loadHandle(targetProvider);
+    if (!isCurrentFolderOperation(operationId, targetProvider)) return;
+    if (saved) {
+      try {
+        const req = await saved.handle.requestPermission({ mode: 'read' });
+        if (!isCurrentFolderOperation(operationId, targetProvider)) return;
+        if (req === 'granted') {
+          const loaded = await loadFromHandle(saved.handle, targetProvider, operationId);
+          if (loaded) {
+            handleRef.current = saved.handle;
+            sourceIdRef.current = saved.sourceId;
+            setSourceId(saved.sourceId);
+            return;
+          }
+          if (isCurrentFolderOperation(operationId, targetProvider)) await clearHandle(targetProvider);
+        }
+      } catch {
+        // Handle may no longer be valid (e.g. folder moved/deleted); fall
+        // through to the full picker below.
+      }
+    }
+
     try {
       const handle = await window.showDirectoryPicker({ mode: 'read' });
       if (!isCurrentFolderOperation(operationId, targetProvider)) return;
@@ -338,7 +365,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
 
   const changeFolder = useCallback(async () => {
     if (isLocal) return;
-    await pickFolder();
+    await pickFolder({ forceNew: true });
   }, [isLocal, pickFolder]);
 
   const reload = useCallback(async () => {
