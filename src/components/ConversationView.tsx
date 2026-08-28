@@ -192,6 +192,7 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
       .then(d => {
         if (cancelled) return;
         if (!d || 'unchanged' in d) { setError('not-found'); setLoading(false); loadingRef.current = false; return; }
+        setError('');
         setData(d);
         dataSigRef.current = convSig(d);
         lastMtimeRef.current = d.mtimeMs;
@@ -336,7 +337,7 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
             sessionId={sessionId}
           />
         )}
-        <CopyButton text={conversationToMarkdown(data, t('msgUser'), assistantName)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
+        <CopyButton text={conversationToMarkdown(data, t('msgUser'), assistantName, filters)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
       </div>
 
       {/* Stats */}

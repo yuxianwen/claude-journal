@@ -15,16 +15,16 @@ import PrivacyImage from './PrivacyImage';
 import { translateText } from '@/lib/translate';
 import { useSettings } from '@/contexts/SettingsContext';
 
-function messageToMarkdown(message: Message, userLabel: string, assistantName: string): string {
+function messageToMarkdown(message: Message, userLabel: string, assistantName: string, filters?: MessageFilters): string {
   const role = message.type === 'user' ? userLabel : assistantName;
   const lines: string[] = [`**${role}**`, ''];
   for (const block of message.content) {
     if (block.type === 'text') {
       lines.push(block.text);
     } else if (block.type === 'thinking') {
-      lines.push(`> 思考: ${block.thinking}`);
+      if (filters?.thinking !== false) lines.push(`> 思考: ${block.thinking}`);
     } else if (block.type === 'tool_use') {
-      lines.push(`\`\`\`\n[${block.name}] ${JSON.stringify(block.input)}\n\`\`\``);
+      if (filters?.tools !== false) lines.push(`\`\`\`\n[${block.name}] ${JSON.stringify(block.input)}\n\`\`\``);
     } else if (block.type === 'image') {
       lines.push('[图片]');
     }
@@ -32,12 +32,12 @@ function messageToMarkdown(message: Message, userLabel: string, assistantName: s
   return lines.join('\n');
 }
 
-function CopyMdButton({ message, isUser, userLabel, assistantName, label, copiedLabel }: { message: Message; isUser: boolean; userLabel: string; assistantName: string; label: string; copiedLabel: string }) {
+function CopyMdButton({ message, isUser, userLabel, assistantName, label, copiedLabel, filters }: { message: Message; isUser: boolean; userLabel: string; assistantName: string; label: string; copiedLabel: string; filters?: MessageFilters }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(messageToMarkdown(message, userLabel, assistantName));
+    await navigator.clipboard.writeText(messageToMarkdown(message, userLabel, assistantName, filters));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -424,7 +424,7 @@ export default function MessageBubble({ message, toolResults, filters, assistant
           <MessageTime timestamp={message.timestamp} locale={locale} />
           {message.usage && <TokenBadge usage={message.usage} />}
           <TranslateButton onTranslate={handleTranslate} state={translateState} isUser={isUser} showTranslation={showTranslation} />
-          <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} assistantName={assistantName} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} />
+          <CopyMdButton message={message} isUser={isUser} userLabel={t('msgUser')} assistantName={assistantName} label={t('msgCopyMd')} copiedLabel={t('msgCopied')} filters={filters} />
           <CopyImgButton bubbleRef={bubbleRef} isUser={isUser} label={t('msgCopyImg')} copiedLabel={t('msgCopied')} />
         </div>
       </div>

@@ -245,7 +245,9 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok) return;
         applyProjects(await res.json());
       } else if (handleRef.current) {
-        applyProjects(provider === 'codex'
+        applyProjects(provider === 'gemini'
+          ? await getGeminiAllProjects(handleRef.current)
+          : provider === 'codex'
           ? await getCodexAllProjects(handleRef.current)
           : await getAllProjects(handleRef.current));
       }

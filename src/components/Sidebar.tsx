@@ -10,6 +10,9 @@ import {
   listSessionAnnotations,
   makeSessionKey,
 } from '@/lib/annotations';
+import ClaudeIcon from './ClaudeIcon';
+import CodexIcon from './CodexIcon';
+import GeminiIcon from './GeminiIcon';
 
 const YESTERDAY: Record<string, string> = {
   'zh-CN': '昨天', ja: '昨日', ko: '어제',
@@ -294,8 +297,8 @@ export default function Sidebar({ projects, selectedProjectId, selectedSessionId
       {/* Bottom Profile / Settings Area */}
       <div className="mt-auto border-t border-gray-800 px-4 py-3 bg-gray-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-            {provider === 'codex' ? 'Cx' : provider === 'gemini' ? 'Ag' : 'Cl'}
+          <div className="w-6 h-6 rounded-full flex items-center justify-center">
+            {provider === 'codex' ? <CodexIcon className="w-6 h-6" /> : provider === 'gemini' ? <GeminiIcon className="w-6 h-6" /> : <ClaudeIcon className="w-6 h-6" />}
           </div>
           <span className="text-xs font-medium text-gray-300 capitalize">
             {provider === 'gemini' ? 'Antigravity' : provider}
