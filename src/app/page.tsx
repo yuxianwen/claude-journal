@@ -138,9 +138,24 @@ export default function Home() {
     localStorage.setItem('claude-journal-selected', JSON.stringify({ provider, projectId: activeProjectId, sessionId: activeSessionId }));
   }, [activeProjectId, activeSessionId, provider]);
 
-  const [filters, setFilters] = useState<MessageFilters>({ thinking: true, tools: true, userMessages: true, assistantMessages: true });
+  const [filters, setFilters] = useState<MessageFilters>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('claude-journal-filters');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {}
+      }
+    }
+    return { thinking: true, tools: true, userMessages: true, assistantMessages: true };
+  });
+
   const toggleFilter = useCallback((key: keyof MessageFilters) => {
-    setFilters(f => ({ ...f, [key]: !f[key] }));
+    setFilters(f => {
+      const newFilters = { ...f, [key]: !f[key] };
+      localStorage.setItem('claude-journal-filters', JSON.stringify(newFilters));
+      return newFilters;
+    });
   }, []);
 
   const handleSelectSession = useCallback((projectId: string, sessionId: string, messageUuid?: string) => {

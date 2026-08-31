@@ -526,6 +526,7 @@ export async function getGeminiAllProjects(dirHandle: FileSystemDirectoryHandle)
 
   const byProject = new Map<string, SessionMeta[]>();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for await (const [name, handle] of (brainHandle as any).entries()) {
     if (handle.kind === 'directory' && name !== 'scratch') {
       try {
