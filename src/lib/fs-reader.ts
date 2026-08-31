@@ -91,10 +91,18 @@ function parseSessionMeta(projectId: string, sessionId: string, content: string)
         text = textBlock?.text || '';
       }
 
-      // Clean out injected context tags
+      // Extract slash command if present
+      const cmdMatch = text.match(/<command-name>([\s\S]*?)<\/command-name>/i);
+      if (cmdMatch && cmdMatch[1].trim()) {
+        title = cmdMatch[1].trim();
+        break;
+      }
+
+      // Clean out injected context tags and command boilerplate
       const cleaned = text
         .replace(/<local-command-caveat>[\s\S]*?<\/local-command-caveat>/gi, '')
         .replace(/<environment_context>[\s\S]*?<\/environment_context>/gi, '')
+        .replace(/<command-[a-z-]+>[\s\S]*?<\/command-[a-z-]+>/gi, '')
         .trim();
 
       if (cleaned) {

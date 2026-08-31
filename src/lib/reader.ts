@@ -113,14 +113,35 @@ function parseSessionFile(filePath: string): SessionMeta {
   }
 
   if (!title) {
-    const firstUser = lines.find(l => l.type === 'user');
-    const rawContent = firstUser?.message?.content;
-    if (typeof rawContent === 'string') {
-      title = rawContent.slice(0, 60) + (rawContent.length > 60 ? '...' : '');
-    } else if (Array.isArray(rawContent)) {
-      const textBlock = rawContent.find((c: { type: string; text?: string }) => c.type === 'text');
-      const text = textBlock?.text || '';
-      title = text.slice(0, 60) + (text.length > 60 ? '...' : '');
+    for (const line of lines) {
+      if (line.type !== 'user') continue;
+      let text = '';
+      const rawContent = line.message?.content;
+      if (typeof rawContent === 'string') {
+        text = rawContent;
+      } else if (Array.isArray(rawContent)) {
+        const textBlock = rawContent.find((c: { type: string; text?: string }) => c.type === 'text');
+        text = textBlock?.text || '';
+      }
+
+      // Extract slash command if present
+      const cmdMatch = text.match(/<command-name>([\s\S]*?)<\/command-name>/i);
+      if (cmdMatch && cmdMatch[1].trim()) {
+        title = cmdMatch[1].trim();
+        break;
+      }
+
+      // Clean out injected context tags and command boilerplate
+      const cleaned = text
+        .replace(/<local-command-caveat>[\s\S]*?<\/local-command-caveat>/gi, '')
+        .replace(/<environment_context>[\s\S]*?<\/environment_context>/gi, '')
+        .replace(/<command-[a-z-]+>[\s\S]*?<\/command-[a-z-]+>/gi, '')
+        .trim();
+
+      if (cleaned) {
+        title = cleaned.slice(0, 60) + (cleaned.length > 60 ? '...' : '');
+        break;
+      }
     }
     if (!title) title = sessionId.slice(0, 8);
   }
