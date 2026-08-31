@@ -106,14 +106,31 @@ function parseGeminiSession(projectId: string, sessionId: string, rawData: strin
     } catch(e) {}
   }
   
+  let title = '';
   const startTime = messages[0]?.timestamp || new Date().toISOString();
   const endTime = messages[messages.length-1]?.timestamp || startTime;
+
+  for (const msg of messages) {
+    if (msg.type === 'user') {
+      const textBlock = msg.content.find(b => b.type === 'text');
+      if (textBlock && 'text' in textBlock && textBlock.text) {
+        const cleaned = textBlock.text
+          .replace(/<local-command-caveat>[\s\S]*?<\/local-command-caveat>/gi, '')
+          .replace(/<environment_context>[\s\S]*?<\/environment_context>/gi, '')
+          .trim();
+        if (cleaned) {
+          title = cleaned.slice(0, 60) + (cleaned.length > 60 ? '...' : '');
+          break;
+        }
+      }
+    }
+  }
 
   const sessionMeta: SessionMeta = {
     id: sessionId,
     provider: 'gemini',
     projectId: projectId,
-    title: `Session ${sessionId.substring(0, 8)}`,
+    title: title || `Antigravity ${sessionId.substring(0, 8)}`,
     startTime,
     endTime,
     messageCount: messages.length,
@@ -125,6 +142,8 @@ function parseGeminiSession(projectId: string, sessionId: string, rawData: strin
 
   return { session: sessionMeta, messages, mtimeMs };
 }
+
+const geminiMetaCache = new Map<string, { mtimeMs: number; meta: SessionMeta }>();
 
 export function getGeminiProjects(): Project[] {
   const sessions = walkSessions();
@@ -140,19 +159,16 @@ export function getGeminiProjects(): Project[] {
       const workspacePath = sessionToWorkspace.get(sessionId) || 'ungrouped';
       const projectId = workspacePath === 'ungrouped' ? 'ungrouped' : path.basename(workspacePath);
       
-      const meta: SessionMeta = {
-        id: sessionId,
-        provider: 'gemini',
-        projectId: projectId,
-        title: `Antigravity ${sessionId.substring(0, 8)}`,
-        startTime: new Date(mtimeMs).toISOString(),
-        endTime: new Date(mtimeMs).toISOString(),
-        messageCount: 0,
-        toolCallCount: 0,
-        tokenUsage: emptyUsage(),
-        cwd: workspacePath === 'ungrouped' ? GEMINI_BRAIN_DIR : workspacePath,
-        model: 'Gemini',
-      };
+      let meta: SessionMeta;
+      const cached = geminiMetaCache.get(file);
+      if (cached && cached.mtimeMs === mtimeMs) {
+        meta = cached.meta;
+      } else {
+        const rawData = fs.readFileSync(file, 'utf-8');
+        meta = parseGeminiSession(projectId, sessionId, rawData, mtimeMs).session;
+        meta.cwd = workspacePath === 'ungrouped' ? GEMINI_BRAIN_DIR : workspacePath;
+        geminiMetaCache.set(file, { mtimeMs, meta });
+      }
       
       if (!byProject.has(projectId)) {
         byProject.set(projectId, []);
