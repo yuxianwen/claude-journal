@@ -4,6 +4,7 @@ import {
   codexMessageText,
   parseCodexSessionMeta,
 } from '@/lib/codex-shared';
+import { extractClaudeTitle } from '@/lib/claude-title';
 
 function emptyUsage(): TokenUsage {
   return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreateTokens: 0 };
@@ -27,7 +28,7 @@ function parseLines(content: string) {
 function parseSessionMeta(projectId: string, sessionId: string, content: string): SessionMeta {
   const lines = parseLines(content);
 
-  let title = '';
+  const title = extractClaudeTitle(lines, sessionId);
   let cwd = '';
   let model = '';
   let startTime = '';
@@ -37,10 +38,6 @@ function parseSessionMeta(projectId: string, sessionId: string, content: string)
   let tokenUsage = emptyUsage();
 
   for (const line of lines) {
-    if (line.type === 'custom-title') {
-      title = line.customTitle || '';
-    }
-
     if (line.type === 'user') {
       if (!cwd && line.cwd) cwd = line.cwd;
       if (!startTime && line.timestamp) startTime = line.timestamp;
@@ -77,40 +74,6 @@ function parseSessionMeta(projectId: string, sessionId: string, content: string)
         toolCallCount += c.filter((b: { type: string }) => b.type === 'tool_use').length;
       }
     }
-  }
-
-  if (!title) {
-    for (const line of lines) {
-      if (line.type !== 'user') continue;
-      let text = '';
-      const rawContent = line.message?.content;
-      if (typeof rawContent === 'string') {
-        text = rawContent;
-      } else if (Array.isArray(rawContent)) {
-        const textBlock = rawContent.find((c: { type: string; text?: string }) => c.type === 'text');
-        text = textBlock?.text || '';
-      }
-
-      // Extract slash command if present
-      const cmdMatch = text.match(/<command-name>([\s\S]*?)<\/command-name>/i);
-      if (cmdMatch && cmdMatch[1].trim()) {
-        title = cmdMatch[1].trim();
-        break;
-      }
-
-      // Clean out injected context tags and command boilerplate
-      const cleaned = text
-        .replace(/<local-command-caveat>[\s\S]*?<\/local-command-caveat>/gi, '')
-        .replace(/<environment_context>[\s\S]*?<\/environment_context>/gi, '')
-        .replace(/<command-[a-z-]+>[\s\S]*?<\/command-[a-z-]+>/gi, '')
-        .trim();
-
-      if (cleaned) {
-        title = cleaned.slice(0, 60) + (cleaned.length > 60 ? '...' : '');
-        break;
-      }
-    }
-    if (!title) title = sessionId.slice(0, 8);
   }
 
   return { id: sessionId, provider: 'claude', projectId, title, startTime, endTime, messageCount, toolCallCount, tokenUsage, cwd, model };
