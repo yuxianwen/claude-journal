@@ -242,19 +242,22 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
     if (el) el.scrollTop = el.scrollHeight;
   }, [data]);
 
-  // Restore scroll position from URL ?scroll= after data renders (skip if highlight target present).
-  // Only honoured when URL p/s match this session — prevents stale params from a previous session.
+  // On initial load: restore the scroll position from URL ?scroll= if it belongs
+  // to this exact session (stale params from a previous session are ignored);
+  // otherwise jump to the bottom so the newest messages are what you see first.
   useEffect(() => {
     if (!data || highlightMessageId) return;
-    if (didRestoreRef.current) return; // only restore on initial load, not on poll updates
+    if (didRestoreRef.current) return; // only on initial load, not on poll updates
     didRestoreRef.current = true;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('p') !== projectId || params.get('s') !== sessionId) return;
-    const saved = parseInt(params.get('scroll') || '0', 10);
-    if (saved <= 0) return;
-    requestAnimationFrame(() => {
-      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = saved;
-    });
+    const sameSession = params.get('p') === projectId && params.get('s') === sessionId;
+    const saved = sameSession ? parseInt(params.get('scroll') || '0', 10) : 0;
+    const apply = () => {
+      const el = scrollContainerRef.current;
+      if (el) el.scrollTop = saved > 0 ? saved : el.scrollHeight;
+    };
+    // Double rAF: let a long message list finish laying out before we measure.
+    requestAnimationFrame(() => requestAnimationFrame(apply));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
