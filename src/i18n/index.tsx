@@ -6,7 +6,7 @@ import { Locale, T, LOCALES, translations, detectLocale, RTL_LOCALES } from './l
 interface I18nContextType {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: keyof T, vars?: { n?: number }) => string;
+  t: (key: keyof T, vars?: { n?: number | string }) => string;
 }
 
 const I18nContext = createContext<I18nContextType | null>(null);
@@ -47,7 +47,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     window.dispatchEvent(new Event(LOCALE_CHANGE_EVENT));
   }, []);
 
-  const t = useCallback((key: keyof T, vars?: { n?: number }): string => {
+  const t = useCallback((key: keyof T, vars?: { n?: number | string }): string => {
     const str = translations[locale][key] ?? translations['en'][key] ?? String(key);
     if (vars?.n !== undefined) return str.replace('{n}', String(vars.n));
     return str;

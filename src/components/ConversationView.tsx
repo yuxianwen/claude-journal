@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ConversationData, Message } from '@/types';
+import { ConversationData, Message, MessageFilters } from '@/types';
 import { useFolderContext } from '@/contexts/FolderContext';
 import { useI18n } from '@/i18n';
 import { collectToolResults } from '@/lib/tool-results';
@@ -11,6 +11,7 @@ import MessageBubble from './MessageBubble';
 import StatsBar from './StatsBar';
 import SessionSummaryCard from './SessionSummaryCard';
 import SessionAnnotations from './SessionAnnotations';
+import ShareDialog from './ShareDialog';
 
 function titleKey(sourceId: string, provider: string, projectId: string, sessionId: string) {
   return `journal:title:v2:${encodeURIComponent(sourceId)}:${provider}:${encodeURIComponent(projectId)}:${encodeURIComponent(sessionId)}`;
@@ -99,12 +100,7 @@ function CopyButton({ text, label, copiedLabel }: { text: string; label: string;
   );
 }
 
-export interface MessageFilters {
-  thinking: boolean;
-  tools: boolean;
-  userMessages: boolean;
-  assistantMessages: boolean;
-}
+export type { MessageFilters };
 
 function messageHasVisibleContent(msg: Message, filters: MessageFilters): boolean {
   if (msg.type === 'user' && !filters.userMessages) return false;
@@ -164,6 +160,7 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
   const [error, setError] = useState('');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -341,6 +338,17 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
           />
         )}
         <CopyButton text={conversationToMarkdown(data, t('msgUser'), assistantName, filters)} label={t('convCopyMarkdown')} copiedLabel={t('convCopied')} />
+        <button
+          type="button"
+          onClick={() => setShowShare(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-400 hover:text-slate-800 hover:border-slate-400 dark:hover:text-gray-200 dark:hover:border-gray-600 transition-colors"
+          title={t('shareButton')}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span>{t('shareButton')}</span>
+        </button>
       </div>
 
       {/* Stats */}
@@ -379,6 +387,16 @@ export default function ConversationView({ projectId, sessionId, assistantName, 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
           </svg>
         </button>
+      )}
+
+      {showShare && data && (
+        <ShareDialog
+          data={data}
+          assistantName={assistantName}
+          userLabel={t('msgUser')}
+          initialFilters={filters}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );

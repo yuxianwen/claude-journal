@@ -55,3 +55,11 @@ export interface ConversationData {
   /** File modification time (ms). Used by clients for conditional polling. */
   mtimeMs?: number;
 }
+
+export interface MessageFilters {
+  thinking: boolean;
+  tools: boolean;
+  userMessages: boolean;
+  assistantMessages: boolean;
+}
+
