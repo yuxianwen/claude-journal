@@ -104,6 +104,17 @@ export interface T {
   settingsTranslateTarget: string
   settingsTranslateTargetHint: string
   settingsDone: string
+  shareButton: string
+  shareDialogTitle: string
+  shareDisclaimer: string
+  shareExportHtml: string
+  shareIncludeImages: string
+  shareRedactedSecrets: string
+  shareRedactedPaths: string
+  shareRedactedImages: string
+  shareEstimatedSize: string
+  sharePreviewTitle: string
+  shareClose: string
 }
 
 // {n} is replaced with the numeric value at runtime
@@ -194,7 +205,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: '界面语言',
     settingsTranslateTarget: '默认翻译目标语言',
     settingsTranslateTargetHint: '点击消息框底部的翻译按钮时，会默认翻译为该语言。',
-    settingsDone: '完成'
+    settingsDone: '完成',
+    shareButton: '分享',
+    shareDialogTitle: '分享对话',
+    shareDisclaimer: '敏感信息打码为尽力而为，不保证零泄漏。请在分享前核对内容，您对分享的内容承担全部责任。',
+    shareExportHtml: '导出为网页',
+    shareIncludeImages: '包含图片',
+    shareRedactedSecrets: '已屏蔽 {n} 处疑似密钥',
+    shareRedactedPaths: '已屏蔽 {n} 处用户名路径',
+    shareRedactedImages: '已剥离 {n} 张图片',
+    shareEstimatedSize: '预计体积：{n}',
+    sharePreviewTitle: '打码预览',
+    shareClose: '关闭',
     },
   'en': {
     pickerTitle: 'Select data directory',
@@ -282,7 +304,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Share',
+    shareDialogTitle: 'Share Conversation',
+    shareDisclaimer: 'Redaction is best-effort and does not guarantee zero leakage. Please verify the content before sharing. You are solely responsible for what you share.',
+    shareExportHtml: 'Export as web page',
+    shareIncludeImages: 'Include images',
+    shareRedactedSecrets: '{n} secret(s) redacted',
+    shareRedactedPaths: '{n} path(s) redacted',
+    shareRedactedImages: '{n} image(s) stripped',
+    shareEstimatedSize: 'Estimated size: {n}',
+    sharePreviewTitle: 'Redaction Preview',
+    shareClose: 'Close',
     },
   'ja': {
     pickerTitle: 'データフォルダを選択',
@@ -370,7 +403,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: '共有',
+    shareDialogTitle: '会話を共有',
+    shareDisclaimer: '機密情報の伏せ字処理はベストエフォートであり、完全な漏洩防止を保証するものではありません。共有前に内容をご確認ください。',
+    shareExportHtml: 'Webページとしてエクスポート',
+    shareIncludeImages: '画像を含める',
+    shareRedactedSecrets: '{n}箇所のシークレットを伏せ字化',
+    shareRedactedPaths: '{n}箇所のユーザーパスを伏せ字化',
+    shareRedactedImages: '{n}枚の画像を除去',
+    shareEstimatedSize: '推定サイズ: {n}',
+    sharePreviewTitle: '伏せ字プレビュー',
+    shareClose: '閉じる',
     },
   'ko': {
     pickerTitle: '데이터 폴더 선택',
@@ -458,7 +502,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: '공유',
+    shareDialogTitle: '대화 공유',
+    shareDisclaimer: '민감 정보 마스킹은 최선의 노력으로 제공되며 완벽한 방지를 보장하지 않습니다. 공유하기 전에 내용을 확인하세요.',
+    shareExportHtml: '웹 페이지로 내보내기',
+    shareIncludeImages: '이미지 포함',
+    shareRedactedSecrets: '비밀 {n}개 마스킹됨',
+    shareRedactedPaths: '사용자 경로 {n}개 마스킹됨',
+    shareRedactedImages: '이미지 {n}개 제거됨',
+    shareEstimatedSize: '예상 크기: {n}',
+    sharePreviewTitle: '마스킹 미리보기',
+    shareClose: '닫기',
     },
   'es': {
     pickerTitle: 'Seleccionar directorio de datos',
@@ -546,7 +601,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Compartir',
+    shareDialogTitle: 'Compartir conversación',
+    shareDisclaimer: 'La censura de datos sensibles es de mejor esfuerzo y no garantiza cero filtraciones. Revise el contenido antes de compartir. Usted es responsable de lo que comparte.',
+    shareExportHtml: 'Exportar como página web',
+    shareIncludeImages: 'Incluir imágenes',
+    shareRedactedSecrets: '{n} secreto(s) censurado(s)',
+    shareRedactedPaths: '{n} ruta(s) censurada(s)',
+    shareRedactedImages: '{n} imagen(es) eliminada(s)',
+    shareEstimatedSize: 'Tamaño estimado: {n}',
+    sharePreviewTitle: 'Vista previa de censura',
+    shareClose: 'Cerrar',
     },
   'fr': {
     pickerTitle: 'Sélectionner le dossier de données',
@@ -634,7 +700,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Partager',
+    shareDialogTitle: 'Partager la conversation',
+    shareDisclaimer: 'Le masquage des données sensibles est effectué au mieux et ne garantit pas une absence totale de fuite. Vérifiez le contenu avant de le partager.',
+    shareExportHtml: 'Exporter en page web',
+    shareIncludeImages: 'Inclure les images',
+    shareRedactedSecrets: '{n} secret(s) masqué(s)',
+    shareRedactedPaths: '{n} chemin(s) masqué(s)',
+    shareRedactedImages: '{n} image(s) supprimée(s)',
+    shareEstimatedSize: 'Taille estimée : {n}',
+    sharePreviewTitle: 'Aperçu du masquage',
+    shareClose: 'Fermer',
     },
   'de': {
     pickerTitle: 'Datenordner auswählen',
@@ -722,7 +799,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Teilen',
+    shareDialogTitle: 'Unterhaltung teilen',
+    shareDisclaimer: 'Das Unkenntlichmachen sensibler Daten erfolgt nach bestem Wissen und gewährleistet keinen vollständigen Schutz. Bitte überprüfen Sie den Inhalt vor dem Teilen.',
+    shareExportHtml: 'Als Webseite exportieren',
+    shareIncludeImages: 'Bilder einbinden',
+    shareRedactedSecrets: '{n} Geheimnis(se) geschwärzt',
+    shareRedactedPaths: '{n} Pfad(e) geschwärzt',
+    shareRedactedImages: '{n} Bild(er) entfernt',
+    shareEstimatedSize: 'Geschätzte Größe: {n}',
+    sharePreviewTitle: 'Schwärzungsvorschau',
+    shareClose: 'Schließen',
     },
   'pt': {
     pickerTitle: 'Selecionar pasta de dados',
@@ -810,7 +898,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Compartilhar',
+    shareDialogTitle: 'Compartilhar conversa',
+    shareDisclaimer: 'A ocultação de dados confidenciais é feita com o melhor esforço e não garante vazamento zero. Revise o conteúdo antes de compartilhar.',
+    shareExportHtml: 'Exportar como página web',
+    shareIncludeImages: 'Incluir imagens',
+    shareRedactedSecrets: '{n} segredo(s) ocultado(s)',
+    shareRedactedPaths: '{n} caminho(s) ocultado(s)',
+    shareRedactedImages: '{n} imagem(ns) removida(s)',
+    shareEstimatedSize: 'Tamanho estimado: {n}',
+    sharePreviewTitle: 'Prévia de ocultação',
+    shareClose: 'Fechar',
     },
   'ru': {
     pickerTitle: 'Выбрать папку данных',
@@ -898,7 +997,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'Поделиться',
+    shareDialogTitle: 'Поделиться диалогом',
+    shareDisclaimer: 'Маскирование конфиденциальных данных выполняется по мере возможностей и не гарантирует полное отсутствие утечек. Проверьте содержимое перед отправкой.',
+    shareExportHtml: 'Экспортировать как веб-страницу',
+    shareIncludeImages: 'Включать изображения',
+    shareRedactedSecrets: 'Скрыто секретов: {n}',
+    shareRedactedPaths: 'Скрыто путей: {n}',
+    shareRedactedImages: 'Удалено изображений: {n}',
+    shareEstimatedSize: 'Примерный размер: {n}',
+    sharePreviewTitle: 'Предпросмотр скрытия',
+    shareClose: 'Закрыть',
     },
   'ar': {
     pickerTitle: 'اختر مجلد البيانات',
@@ -986,7 +1096,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'مشاركة',
+    shareDialogTitle: 'مشاركة المحادثة',
+    shareDisclaimer: 'حجب البيانات الحساسة يتم بأقصى جهد ولا يضمن عدم التسريب بنسبة 100%. يرجى مراجعة المحتوى قبل المشاركة.',
+    shareExportHtml: 'تصدير كصفحة ويب',
+    shareIncludeImages: 'تضمين الصور',
+    shareRedactedSecrets: 'تم حجب {n} من الأسرار',
+    shareRedactedPaths: 'تم حجب {n} من المسارات',
+    shareRedactedImages: 'تمت إزالة {n} من الصور',
+    shareEstimatedSize: 'الحجم التقديري: {n}',
+    sharePreviewTitle: 'معاينة الحجب',
+    shareClose: 'إغلاق',
     },
   'hi': {
     pickerTitle: 'डेटा फ़ोल्डर चुनें',
@@ -1074,7 +1195,18 @@ export const translations: Record<Locale, T> = {
     settingsLanguage: 'UI Language',
     settingsTranslateTarget: 'Default Translate Target',
     settingsTranslateTargetHint: 'Messages will be translated to this language by default.',
-    settingsDone: 'Done'
+    settingsDone: 'Done',
+    shareButton: 'साझा करें',
+    shareDialogTitle: 'बातचीत साझा करें',
+    shareDisclaimer: 'संवेदनशील डेटा को छिपाना सर्वोत्तम प्रयास के आधार पर है और पूर्ण सुरक्षा की गारंटी नहीं देता है। साझा करने से पहले सामग्री की जांच करें।',
+    shareExportHtml: 'वेब पेज के रूप में निर्यात करें',
+    shareIncludeImages: 'चित्र शामिल करें',
+    shareRedactedSecrets: '{n} गुप्त जानकारी छिपाई गई',
+    shareRedactedPaths: '{n} पथ छिपाए गए',
+    shareRedactedImages: '{n} चित्र हटाए गए',
+    shareEstimatedSize: 'अनुमानित आकार: {n}',
+    sharePreviewTitle: 'मास्किंग पूर्वावलोकन',
+    shareClose: 'बंद करें',
     },
 };
 
